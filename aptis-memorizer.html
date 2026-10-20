@@ -171,6 +171,13 @@ label.sw{display:inline-flex;align-items:center;gap:6px;font-size:calc(14.4px * 
 hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .kbd{font-family:var(--mono);font-size:calc(12.6px * var(--zoom));padding:1px 5px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);color:var(--fg-dim)}
 .wordlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,20,16,.5)}
+.modal{width:min(760px,100%);max-height:86vh;overflow:auto;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 18px 48px rgba(0,0,0,.28)}
+.modal h2{font-family:var(--display);font-size:calc(23px * var(--zoom));font-weight:600}
+.field{display:block;margin-top:12px}
+.field span{display:block;margin-bottom:4px;font-size:calc(13px * var(--zoom));font-weight:600;color:var(--fg-dim)}
+.field input,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);font-size:calc(15px * var(--zoom))}
+.field textarea{min-height:230px;font-family:var(--display);font-size:calc(16.5px * var(--zoom));line-height:1.6;resize:vertical}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:calc(13px * var(--zoom));color:var(--fg-dim)}
 .legend i{font-style:normal}
 .zoombox{display:inline-flex;align-items:center;gap:5px}
@@ -212,6 +219,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
     <div class="bar-spacer"></div>
     <div class="filechip" id="fileChip" hidden><span>Bài:</span><b id="fileName"></b><span id="fileMeta"></span></div>
     <button class="btn" id="openBtn">Mở file .txt</button>
+    <button class="btn" id="pasteBtn">Dán bài mới</button>
     <span class="zoombox">
       <button class="btn ghost sm" id="zoomOut" title="Thu nhỏ chữ">A&minus;</button>
       <b id="zoomVal">100%</b>
@@ -2011,14 +2019,13 @@ function viewEmpty(v) {
   drop.style.marginTop = '14px';
   drop.innerHTML = '<b>Kéo file .txt vào đây</b><div class="hint" style="margin-top:6px">hoặc bấm &ldquo;Mở file .txt&rdquo; ở trên, hoặc dán nội dung bên dưới</div>';
   c.appendChild(drop);
-  const ta = el('textarea', 'type');
-  ta.placeholder = 'Dán nội dung bài vào đây (phần chủ đề ở trên, dòng ------ , rồi đoạn tiếng Anh)…';
-  ta.style.marginTop = '12px';
-  c.appendChild(ta);
-  const b = el('button', 'btn primary', 'Nạp nội dung đã dán');
-  b.style.marginTop = '8px';
-  b.onclick = () => { if (ta.value.trim().length > 40) loadText(ta.value, 'Bài dán tay'); else toast('Nội dung quá ngắn.'); };
-  c.appendChild(b);
+  const row = el('div', 'row'); row.style.marginTop = '12px';
+  const b1 = el('button', 'btn primary', 'Mở file .txt');
+  b1.onclick = () => $('#fileInput').click();
+  const b2 = el('button', 'btn', 'Dán bài mới');
+  b2.onclick = openPaste;
+  row.appendChild(b1); row.appendChild(b2);
+  c.appendChild(row);
   v.appendChild(c);
 
   const g = el('div', 'card');
@@ -2107,6 +2114,73 @@ function loadText(raw, name) {
   toast('Đã nạp: ' + nSent + ' câu, ' + dueIds().length + ' câu cần học' + old);
 }
 
+/* ---- Hop thoai dan bai moi: goi duoc moi luc, co o nhap ten bai ---- */
+function autoName(raw) {
+  const d = parseDoc(raw);
+  if (d.topics.length) return d.topics[0].title.replace(/^Topic\s*/i, 'Topic ').slice(0, 60);
+  const w = words(d.body).slice(0, 6).join(' ');
+  return w ? w + '…' : 'Bài không tên';
+}
+function openPaste() {
+  closePop();
+  const ov = el('div', 'overlay');
+  const box = el('div', 'modal');
+  box.appendChild(el('h2', null, 'Dán bài mới'));
+  box.appendChild(el('p', 'hint', 'Dán nguyên văn bài vào ô nội dung. Nếu có phần chủ đề, đặt ở trên và ngăn bằng một dòng gạch ngang (ví dụ ------). Mỗi đoạn văn để trên một dòng.'));
+
+  const lName = el('label', 'field');
+  lName.appendChild(el('span', null, 'Tên bài'));
+  const iName = el('input');
+  iName.placeholder = 'Ví dụ: Topic 11-18 Reading part 4 — để trống sẽ tự đặt theo chủ đề đầu tiên';
+  lName.appendChild(iName);
+  box.appendChild(lName);
+
+  const lBody = el('label', 'field');
+  lBody.appendChild(el('span', null, 'Nội dung bài'));
+  const ta = el('textarea');
+  ta.placeholder = 'Topic 11: Describe a time when…\n------------------------------\nA few months ago, I went on a long hiking trip…\n\nAt the beginning of the trip, we were excited…';
+  lBody.appendChild(ta);
+  box.appendChild(lBody);
+
+  const info = el('p', 'hint'); info.style.marginTop = '8px';
+  const preview = () => {
+    const t = ta.value.trim();
+    if (t.length < 40) { info.textContent = ''; return; }
+    const d = parseDoc(t);
+    info.textContent = 'Sẽ tạo: ' + d.topics.length + ' chủ đề · ' + d.paras.length + ' đoạn · '
+      + d.paras.reduce((a, p) => a + p.sentences.length, 0) + ' câu · ' + words(d.body).length + ' từ';
+  };
+  ta.oninput = preview;
+  box.appendChild(info);
+
+  const row = el('div', 'row'); row.style.marginTop = '14px';
+  const bOk = el('button', 'btn primary', 'Nạp bài');
+  const bCancel = el('button', 'btn ghost', 'Huỷ');
+  row.appendChild(bOk); row.appendChild(bCancel);
+  row.appendChild(el('span', 'hint', 'Ctrl+Enter để nạp'));
+  box.appendChild(row);
+
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+  const submit = () => {
+    const raw = ta.value.trim();
+    if (raw.length < 40) { toast('Nội dung quá ngắn.'); ta.focus(); return; }
+    const name = iName.value.trim() || autoName(raw);
+    close();
+    loadText(raw, name);
+  };
+  bOk.onclick = submit;
+  bCancel.onclick = close;
+  const onKey = e => {
+    if (e.key === 'Escape') close();
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); }
+  };
+  document.addEventListener('keydown', onKey);
+  ov.onclick = e => { if (e.target === ov) close(); };
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  setTimeout(() => ta.focus(), 30);
+}
+
 function readFile(f) {
   const r = new FileReader();
   r.onload = () => loadText(String(r.result), f.name.replace(/\.txt$/i, ''));
@@ -2114,6 +2188,7 @@ function readFile(f) {
 }
 
 $('#openBtn').onclick = () => $('#fileInput').click();
+$('#pasteBtn').onclick = openPaste;
 $('#fileInput').onchange = e => { const f = e.target.files[0]; if (f) readFile(f); };
 $('#railBtn').onclick = () => $('#rail').classList.toggle('open');
 function applyWidthBtn() {
