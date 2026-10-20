@@ -1,0 +1,5 @@
+artifact.html
+_preview.html
+_*.js
+*.zip
+node_modules/
