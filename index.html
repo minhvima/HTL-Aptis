@@ -1360,9 +1360,11 @@ function drill(v, ids, title, note) {
   const out = el('div');
   const bChk = el('button', 'btn primary', 'Kiểm tra');
   const bSkip = el('button', 'btn ghost', 'Hiện đáp án');
+  const bClear = el('button', 'btn ghost', 'Xoá ô nhập');
+  bClear.title = 'Xoá hết chữ đã gõ để làm lại (Esc)';
   const row2 = el('div', 'row'); row2.style.marginTop = '10px';
-  row2.appendChild(bChk); row2.appendChild(bSkip);
-  row2.appendChild(el('span', 'hint', 'Ctrl+Enter: kiểm tra · chấm điểm xong sẽ tự sang câu sau, hoặc dùng nút chuyển câu bên dưới'));
+  row2.appendChild(bChk); row2.appendChild(bSkip); row2.appendChild(bClear);
+  row2.appendChild(el('span', 'hint', 'Ctrl+Enter: kiểm tra · Esc: xoá ô nhập · chấm điểm xong sẽ tự sang câu sau, hoặc dùng nút chuyển câu bên dưới'));
   c.appendChild(row2); c.appendChild(out);
 
   /* thanh di chuyen giua cac cau: cham diem KHONG phai cach duy nhat de di tiep */
@@ -1403,9 +1405,14 @@ function drill(v, ids, title, note) {
     out.appendChild(el('p', 'hint', 'Gợi ý chấm: ' + (sug === 5 ? 'Dễ' : sug === 4 ? 'Ổn' : sug === 3 ? 'Khó' : 'Quên rồi')));
     persist();
   };
+  const clear = () => { ta.value = ''; out.innerHTML = ''; ta.focus(); };
   bChk.onclick = check;
   bSkip.onclick = () => { ta.value = target; check(); };
-  ta.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); check(); } };
+  bClear.onclick = clear;
+  ta.onkeydown = e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); check(); }
+    if (e.key === 'Escape') { e.preventDefault(); clear(); }
+  };
   v.appendChild(c);
   setTimeout(() => ta.focus(), 30);
 }
