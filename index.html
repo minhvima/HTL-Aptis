@@ -118,8 +118,9 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .sent.dim{color:var(--fg-faint)}
 .w{cursor:pointer;border-radius:3px}
 .w:hover{background:var(--accent-soft)}
-.w.gl{border-bottom:2px solid var(--marker)}
-.w.hard{background:var(--marker-soft);border-bottom:2px solid var(--warn)}
+.w.gl{border-bottom:2px solid var(--marker)}                    /* khó & đã có nghĩa */
+.w.auto{border-bottom:2px dashed var(--fg-faint)}               /* máy đoán khó, chưa có nghĩa */
+.w.hard{background:var(--marker-soft);border-bottom:2px solid var(--warn)}  /* bạn tự đánh dấu */
 .blank{display:inline-block;min-width:3.2em;padding:0 4px;margin:0 1px;border-bottom:2px solid var(--accent);background:var(--accent-soft);border-radius:3px;font-family:var(--mono);font-size:.86em;color:var(--accent-ink);text-align:center;cursor:pointer}
 .blank.open{background:var(--marker-soft);border-color:var(--marker);color:var(--fg)}
 .cue{font-family:var(--mono);font-size:calc(17.3px * var(--zoom));letter-spacing:.06em;color:var(--fg-dim);line-height:2}
@@ -581,6 +582,58 @@ const SR = {
   stop() { if (this.rec && this.live) { try { this.rec.stop(); } catch (e) {} } }
 };
 
+/* ---------------- 6b. DO KHO CUA TU: cham offline + ca nhan hoa ----------------
+   Khong dung danh sach co dinh do nguoi khac doan, ma cham tung tu theo:
+   so am tiet, do hiem (ngoai danh sach tu pho thong), mau chinh ta kho doc,
+   do dai; roi cong them tin hieu rieng cua ban: tu doc sai khi cham mic,
+   so lan ban mo ra tra, va tru het neu ban da bam "Da biet".            */
+const EASY = new Set(('about above across act add afraid after afternoon again against age ago agree air all allow almost alone along already also always among and angry animal another answer any anyone anything appear apple area arm around arrive art ask asleep at attack aunt autumn away baby back bad bag ball bank bar base basket bath be beach bear beautiful because become bed bedroom been before begin behind believe bell below beside best better between big bird birth birthday bit bite black bleed block blood blow blue board boat body boil bone book boot border born borrow both bottle bottom bowl box boy branch brave bread break breakfast breathe bridge bright bring brother brown brush build burn bus business busy but butter buy by cake call can cap car card care careful carry case cat catch ceiling central centre century certain chair chance change cheap check cheese chicken child choose circle city class clean clear clever climb clock close cloth clothes cloud coat coffee coin cold collect colour come common computer condition contain continue control cook cool copy corner correct cost count country course cover cow crash cross crowd cry cup cut dance danger dark date daughter day dead deal dear decide deep depend desk destroy detail develop die difference different difficult dinner direct dirty discover dish do doctor dog door double down draw dream dress drink drive drop dry during dust duty each ear early earn earth east easy eat edge effect egg eight either electric else empty end enemy enjoy enough enter equal escape even evening event ever every everyone everything exact example except excited exercise expect expensive explain eye face fact fail fall family famous far farm fast fat father fear feed feel feeling fell female few field fight fill film final find fine finger finish fire first fish fit five fix flat floor flower fly follow food foot for force forest forget fork form forward four free fresh friend from front fruit full fun funny further future game garden gas gate general gentle get gift girl give glass go goal god gold good goodbye grandfather grandmother grass grave great green grey ground group grow guess guest guide gun hair half hall hand handle hang happen happy hard hat hate have he head health hear heart heat heavy hello help her here hers hide high hill him his hit hold hole holiday home hope horse hospital hot hotel hour house how however hungry hurry hurt husband i ice idea if important in increase inside instead into introduce invent invite iron island it its jelly job join juice jump just keep key kick kill kind king kitchen knife knock know ladder lady lake land language large last late laugh lazy lead leaf learn leave left leg lemon lend length less lesson let letter level library lie life lift light like line lion lip list listen little live lock long look lose lot love low lower luck machine main make male man many map mark market marry match matter may me meal mean measure meat medicine meet member mention method middle might mile milk mind mine minute miss mistake mix model modern moment money month moon more morning most mother mountain mouth move much music must my name narrow nation nature near neck need needle neighbour neither net never new news newspaper next nice night nine no noise none nor north nose not nothing notice now number obey object ocean of off offer office often oil old on once one only open opposite or orange order other our out outside over own page pain paint pair paper parent park part partner party pass past path pay peace pen pencil people pepper per perfect period person petrol photograph piano pick picture piece pig pin pink place plan plane plant plastic plate play please pleased plenty pocket point police pool poor popular position possible postcard pot potato pour power present press pretty prevent price print prison private prize probable problem produce promise proper protect provide public pull punish pupil push put queen question quick quiet quite radio rain raise reach read ready real reason receive record red remember remind remove rent repair repeat reply report rest result return rice rich ride right ring rise river road rock room round rubber rule run sad safe sail salt same sand save say school science scissors search seat second see seem sell send sentence serve set seven several sex shade shadow shake shape share sharp she sheep sheet shelf shine ship shirt shoe shoot shop short should shoulder shout show shut sick side signal silence silly silver similar simple single since sing sink sister sit six size skill skin skirt sky sleep slip slow small smell smile smoke snow so soap sock soft some someone something sometimes son soon sorry sound soup south space speak special speed spell spend spoon sport spread spring square stamp stand star start station stay steal steam step still stomach stone stop store storm story strange street strong structure student study stupid subject substance successful such sudden sugar suitable summer sun sunny support sure surprise sweet swim sword table take talk tall taste taxi tea teach team tear telephone television tell ten tennis terrible test than that the their then there these thick thin thing think third this though threat three tidy tie title to today toe together tomorrow tonight too tool tooth top total touch town train tram travel tree trouble true trust twice try turn type under understand unit until up use useful usual vegetable very village visit voice wait wake walk wall want warm wash waste watch water way we weak wear weather wedding week weight welcome well west wet what wheel when where which while white who why wide wife wild will win wind window wine winter wire wise wish with without woman wonder word work world worry worse worst write wrong year yes yesterday yet you young your zero zoo').split(' '));
+
+const HARD_PAT = [/ough/, /augh/, /tion\b/, /sion\b/, /ture\b/, /cial\b/, /tial\b/, /eigh/, /^(kn|wr|gn|ps|rh)/, /mb\b/, /que\b/, /sch/, /squ/, /[bcdfgklmnpstv]{3}/, /ous\b/, /ism\b/, /ity\b/];
+
+function syllables(w) {
+  const s = w.toLowerCase().replace(/[^a-z]/g, '');
+  if (s.length <= 3) return 1;
+  const core = s.replace(/(?:[^laeiouy]es|[^laeiouy]e)$/, '').replace(/^y/, '');
+  const m = core.match(/[aeiouy]{1,2}/g);
+  return Math.max(1, m ? m.length : 1);
+}
+
+/* kho tu vung ca nhan, dung chung cho moi bai */
+const VOCAB = load('vocab', { known: {}, miss: {}, taps: {}, gloss: {} });
+function vocabSave() { save('vocab', VOCAB); }
+const vkey = w => w.toLowerCase().replace(/[^a-z' ]/g, '');
+
+function hardScore(word) {
+  const k = vkey(word);
+  if (!k || k.length < 3) return 0;
+  if (VOCAB.known[k]) return -99;                       // ban da bao la biet roi
+  let s = 0;
+  const syl = syllables(k);
+  s += Math.max(0, syl - 1) * 1.3;                      // cang nhieu am tiet cang kho doc
+  if (!EASY.has(k) && !EASY.has(k.replace(/(ies|es|s|ed|ing|ly)$/, ''))) s += 1.8;
+  HARD_PAT.forEach(p => { if (p.test(k)) s += 1.1; });  // mau chinh ta de doc sai
+  if (k.length >= 10) s += 0.8;
+  s += Math.min(3, (VOCAB.miss[k] || 0) * 1.2);         // ban tung doc sai khi cham mic
+  s += Math.min(1.6, (VOCAB.taps[k] || 0) * 0.5);       // ban tung mo ra tra nhieu lan
+  return s;
+}
+const HARD_CUT = 3.4;
+const isAutoHard = w => hardScore(w) >= HARD_CUT;
+
+/* xep hang tu kho cua rieng bai dang mo */
+function hardWordsOfDoc(limit) {
+  if (!S.doc) return [];
+  const seen = {};
+  S.doc.paras.forEach(p => words(p.text).forEach(w => {
+    const k = vkey(w);
+    if (!k || STOP.has(k) || seen[k]) return;
+    const sc = hardScore(w);
+    if (sc >= HARD_CUT) seen[k] = { w: k, sc };
+  }));
+  return Object.values(seen).sort((a, b) => b.sc - a.sc).slice(0, limit || 30);
+}
+
 /* ---------------- 7. Tra tu: glossary -> tu dien ca nhan -> API (neu online) ---------------- */
 const PHRASES = Object.keys(GLOSS).filter(k => k.includes(' ')).sort((a, b) => b.length - a.length);
 const apiCache = {};
@@ -588,9 +641,11 @@ const apiCache = {};
 function lookupLocal(key) {
   const k = key.toLowerCase();
   if (GLOSS[k]) return Object.assign({ src: 'glossary' }, GLOSS[k]);
+  if (VOCAB.gloss[k] && VOCAB.gloss[k].vi) return Object.assign({ src: VOCAB.gloss[k].src || 'của bạn' }, VOCAB.gloss[k]);
   if (S.hard[k] && S.hard[k].vi) return { vi: S.hard[k].vi, src: 'của bạn' };
   const base = k.replace(/(ies)$/, 'y').replace(/(es|s|ed|ing)$/, '');
   if (GLOSS[base]) return Object.assign({ src: 'glossary' }, GLOSS[base]);
+  if (VOCAB.gloss[base] && VOCAB.gloss[base].vi) return Object.assign({ src: VOCAB.gloss[base].src || 'của bạn' }, VOCAB.gloss[base]);
   return null;
 }
 async function lookupApi(word) {
@@ -620,12 +675,16 @@ async function showWord(anchor, phrase) {
   const ipaBox = el('div', 'ip'); p.appendChild(ipaBox);
   const viBox = el('div', 'vi'); p.appendChild(viBox);
   const dfBox = el('div', 'df'); p.appendChild(dfBox);
+  VOCAB.taps[key] = (VOCAB.taps[key] || 0) + 1; vocabSave();   // tra nhieu = kho voi ban
   const local = lookupLocal(key);
   if (local) {
     ipaBox.textContent = local.ipa || '';
     viBox.textContent = local.vi || '';
     if (local.note) { const n = el('div', 'nt', local.note); p.appendChild(n); }
-  } else { viBox.innerHTML = '<i>Chưa có nghĩa trong glossary — bạn có thể tự thêm:</i>'; }
+  } else { viBox.innerHTML = '<i>Chưa có nghĩa — bạn tự gõ bên dưới, hoặc bấm “Tạo nghĩa cho cả bài” ở thanh bên.</i>'; }
+  const sc = hardScore(key);
+  p.appendChild(el('div', 'df', 'Độ khó ước lượng: ' + sc.toFixed(1) + ' · ' + syllables(key) + ' âm tiết'
+    + (VOCAB.miss[key] ? ' · bạn từng đọc sai ' + VOCAB.miss[key] + ' lần' : '')));
 
   const row = el('div', 'row'); row.style.marginTop = '10px';
   const bSay = el('button', 'btn sm primary', 'Nghe từ này');
@@ -634,16 +693,28 @@ async function showWord(anchor, phrase) {
   const isHard = !!S.hard[key];
   const bHard = el('button', 'btn sm', isHard ? 'Bỏ khỏi từ khó' : 'Đánh dấu khó');
   bHard.onclick = () => {
-    if (S.hard[key]) delete S.hard[key]; else S.hard[key] = { vi: (local && local.vi) || '', at: Date.now() };
-    persist(); closePop(); render();
+    if (S.hard[key]) delete S.hard[key]; else { S.hard[key] = { vi: (local && local.vi) || '', at: Date.now() }; delete VOCAB.known[key]; }
+    vocabSave(); persist(); closePop(); render();
   };
   row.appendChild(bHard);
+  const known = !!VOCAB.known[key];
+  const bKnow = el('button', 'btn sm ghost', known ? 'Bỏ khỏi “đã biết”' : 'Đã biết từ này');
+  bKnow.title = 'Từ đã biết sẽ không bao giờ được gạch chân nữa, ở mọi bài';
+  bKnow.onclick = () => {
+    if (known) delete VOCAB.known[key];
+    else { VOCAB.known[key] = 1; delete S.hard[key]; delete VOCAB.miss[key]; }
+    vocabSave(); persist(); closePop(); render();
+  };
+  row.appendChild(bKnow);
   p.appendChild(row);
 
   const inp = el('input'); inp.placeholder = 'Nghĩa tiếng Việt của bạn (Enter để lưu)';
-  inp.value = (S.hard[key] && S.hard[key].vi) || '';
+  inp.value = (VOCAB.gloss[key] && VOCAB.gloss[key].vi) || (S.hard[key] && S.hard[key].vi) || '';
   inp.onkeydown = ev => {
-    if (ev.key === 'Enter') { S.hard[key] = { vi: inp.value.trim(), at: Date.now() }; persist(); toast('Đã lưu nghĩa'); closePop(); render(); }
+    if (ev.key === 'Enter') {
+      VOCAB.gloss[key] = { vi: inp.value.trim(), ipa: (local && local.ipa) || '', src: 'của bạn' };
+      vocabSave(); toast('Đã lưu nghĩa'); closePop(); render();
+    }
   };
   p.appendChild(inp);
 
@@ -687,7 +758,10 @@ function tappable(text) {
       const core = tok.replace(/^[^A-Za-z'’]+|[^A-Za-z'’]+$/g, '');
       if (!core) { frag.appendChild(document.createTextNode(tok)); return; }
       const key = core.toLowerCase();
-      const sp = el('span', 'w' + (S.hard[key] ? ' hard' : (lookupLocal(key) ? ' gl' : '')), tok);
+      const cls = S.hard[key] ? ' hard'
+        : lookupLocal(key) ? (isAutoHard(key) ? ' gl' : '')   // co nghia + may thay kho -> gach lien
+        : isAutoHard(key) ? ' auto' : '';                      // may thay kho, chua co nghia -> net dut
+      const sp = el('span', 'w' + cls, tok);
       sp.onclick = ev => { ev.stopPropagation(); showWord(sp, core); };
       frag.appendChild(sp);
     });
@@ -799,22 +873,49 @@ function renderRail() {
   S.doc.paras.forEach((p, i) => list.appendChild(mkItem(keywords(p.text, 2).join(' / ') || ('Đoạn ' + (i + 1)), i)));
   r.appendChild(list);
 
-  const hardKeys = Object.keys(S.hard);
-  r.appendChild(el('h3', null, 'Từ khó (' + hardKeys.length + ')'));
-  if (!hardKeys.length) r.appendChild(el('p', 'hint', 'Bấm vào từ bất kỳ trong bài để xem nghĩa, nghe phát âm và đánh dấu từ khó.'));
+  const auto = hardWordsOfDoc(24);
+  const marked = Object.keys(S.hard);
+  const noMeaning = auto.filter(x => !lookupLocal(x.w)).length;
+
+  r.appendChild(el('h3', null, 'Từ khó của bài (' + auto.length + ')'));
+  r.appendChild(el('p', 'hint', 'Máy chấm theo số âm tiết, độ hiếm, mẫu chính tả khó đọc — và theo chính lỗi của bạn khi chấm mic. Bấm một từ để xem nghĩa; trong đó có nút “Đã biết từ này” để loại bỏ vĩnh viễn.'));
   const wl = el('div', 'wordlist');
-  hardKeys.forEach(k => {
-    const c = el('span', 'kw', k);
-    c.style.cursor = 'pointer';
+  marked.forEach(k => {
+    const c = el('span', 'kw', k); c.style.cssText = 'cursor:pointer;background:var(--marker-soft);color:var(--warn)';
+    c.title = 'Bạn tự đánh dấu';
     c.onclick = () => showWord(c, k);
     wl.appendChild(c);
   });
+  auto.forEach(x => {
+    if (S.hard[x.w]) return;
+    const has = !!lookupLocal(x.w);
+    const c = el('span', 'kw', x.w);
+    c.style.cssText = 'cursor:pointer' + (has ? '' : ';background:transparent;border:1px dashed var(--fg-faint);color:var(--fg-dim)');
+    c.title = (has ? 'Đã có nghĩa' : 'Chưa có nghĩa') + ' · điểm khó ' + x.sc.toFixed(1);
+    c.onclick = () => showWord(c, x.w);
+    wl.appendChild(c);
+  });
   r.appendChild(wl);
-  if (hardKeys.length) {
-    const b = el('button', 'btn sm ghost', 'Đọc lần lượt từ khó');
-    b.style.marginTop = '8px';
-    b.onclick = () => TTS.queue(hardKeys, null, null);
-    r.appendChild(b);
+  if (auto.length) {
+    const row = el('div', 'row'); row.style.marginTop = '8px';
+    const b = el('button', 'btn sm ghost', 'Đọc lần lượt');
+    b.onclick = () => TTS.queue(auto.map(x => x.w), null, null);
+    row.appendChild(b);
+    if (noMeaning) {
+      const b2 = el('button', 'btn sm', 'Tạo nghĩa cho cả bài (' + noMeaning + ')');
+      b2.title = ASR.keyGet() ? 'Dùng OpenAI key đã lưu' : 'Cần nhập OpenAI key ở tab Đọc lại';
+      b2.onclick = () => fillMeanings(auto.filter(x => !lookupLocal(x.w)).map(x => x.w));
+      row.appendChild(b2);
+    }
+    r.appendChild(row);
+  }
+  const knownN = Object.keys(VOCAB.known).length;
+  if (knownN) {
+    const b3 = el('button', 'btn sm ghost', 'Đã biết: ' + knownN + ' từ');
+    b3.style.marginTop = '6px';
+    b3.title = 'Xem và bỏ đánh dấu';
+    b3.onclick = () => { S.mode = 'stats'; render(); };
+    r.appendChild(b3);
   }
 
   const lib = libList();
@@ -1391,6 +1492,48 @@ function runInWorker(w, audio, model, onStatus) {
   });
 }
 
+/* Tao nghia tieng Viet + IPA cho cac tu kho chua co nghia, bang OpenAI key da luu.
+   Ket qua luu vinh vien tren may nen moi tu chi ton tien dung mot lan. */
+async function fillMeanings(list) {
+  const key = ASR.keyGet();
+  if (!key) {
+    toast('Cần nhập OpenAI API key ở tab “Đọc lại (mic)” trước.');
+    S.mode = 'speak'; S.prefs.asr = 'openai'; persist(); render(); return;
+  }
+  if (!list || !list.length) { toast('Mọi từ khó đều đã có nghĩa.'); return; }
+  toast('Đang tra ' + list.length + ' từ…');
+  try {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', temperature: 0,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: 'Bạn là từ điển Anh-Việt cho người luyện thi Aptis. Trả về DUY NHẤT một JSON object: khoá là từ tiếng Anh được hỏi viết thường, giá trị là {"vi": nghĩa tiếng Việt ngắn gọn đúng với ngữ cảnh trong bài, "ipa": phiên âm IPA Anh-Anh đặt giữa hai dấu gạch chéo}. Không giải thích gì thêm.' },
+          { role: 'user', content: 'Bài học:\n"""\n' + (S.doc ? S.doc.body.slice(0, 3000) : '') + '\n"""\n\nCác từ cần tra: ' + list.join(', ') }
+        ]
+      })
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      throw new Error(r.status === 401 ? 'API key không hợp lệ.' : r.status + ' ' + t.slice(0, 120));
+    }
+    const j = await r.json();
+    const obj = JSON.parse(j.choices[0].message.content);
+    let n = 0;
+    Object.keys(obj).forEach(k => {
+      const v = obj[k], kk = vkey(k);
+      if (!kk || !v || !v.vi) return;
+      VOCAB.gloss[kk] = { vi: String(v.vi).trim(), ipa: String(v.ipa || '').trim(), src: 'OpenAI' };
+      n++;
+    });
+    vocabSave();
+    toast('Đã thêm nghĩa cho ' + n + ' từ');
+    render();
+  } catch (e) { toast('Lỗi tra từ: ' + e.message); }
+}
+
 let waPipe = null, waLoading = null;
 async function whisperPipe(onStatus) {
   if (waPipe) return waPipe;
@@ -1569,6 +1712,15 @@ function viewSpeak(v) {
     if (!txt) { live.textContent = 'Không nghe được gì. Thử đọc to hơn hoặc kiểm tra micro.'; return; }
     live.textContent = 'Máy nghe được: “' + txt + '”';
     const d = diffWords(cur.t, txt);
+    // tu bi doc thieu/sai -> ghi nhan lam tu kho cua rieng ban
+    let newMiss = 0;
+    d.parts.forEach(pt => {
+      if (pt.k !== 'miss') return;
+      const k = vkey(pt.w);
+      if (!k || k.length < 3 || STOP.has(k) || VOCAB.known[k]) return;
+      VOCAB.miss[k] = (VOCAB.miss[k] || 0) + 1; newMiss++;
+    });
+    if (newMiss) vocabSave();
     const sc = el('div', 'score');
     sc.appendChild(el('b', null, Math.round(d.acc * 100) + '%'));
     sc.appendChild(el('span', 'hint', 'so từng từ với bản gốc'));
@@ -1700,6 +1852,41 @@ function viewStats(v) {
   });
   v.appendChild(box);
 
+  /* --- kho tu vung ca nhan --- */
+  const kn = Object.keys(VOCAB.known), ms = Object.keys(VOCAB.miss), gl = Object.keys(VOCAB.gloss);
+  const vb = el('div', 'card');
+  vb.appendChild(el('h2', null, 'Từ vựng của bạn'));
+  vb.appendChild(el('p', 'hint', 'Dùng chung cho mọi bài. “Đã biết” sẽ không bao giờ được gạch chân nữa; từ đọc sai khi chấm mic tự được coi là khó hơn.'));
+  const vt = el('div', 'tiles'); vt.style.marginTop = '12px';
+  [['Đã biết', kn.length], ['Từng đọc sai', ms.length], ['Nghĩa đã lưu', gl.length], ['Khó trong bài này', hardWordsOfDoc(99).length]]
+    .forEach(([n, val]) => { const x = el('div', 'tile'); x.appendChild(el('b', null, String(val))); x.appendChild(el('span', null, n)); vt.appendChild(x); });
+  vb.appendChild(vt);
+
+  const sect = (title, keys, onClick, note) => {
+    if (!keys.length) return;
+    vb.appendChild(el('h3', null, title + ' (' + keys.length + ')'));
+    if (note) vb.appendChild(el('p', 'hint', note));
+    const w = el('div', 'wordlist');
+    keys.slice(0, 200).forEach(k => {
+      const c = el('span', 'kw', k + (VOCAB.miss[k] ? ' ×' + VOCAB.miss[k] : ''));
+      c.style.cursor = 'pointer';
+      c.onclick = () => onClick(k, c);
+      w.appendChild(c);
+    });
+    vb.appendChild(w);
+  };
+  sect('Đã biết', kn, k => { delete VOCAB.known[k]; vocabSave(); render(); toast('Đã bỏ “' + k + '” khỏi danh sách đã biết'); },
+    'Bấm một từ để đưa trở lại danh sách cần học.');
+  sect('Từng đọc sai khi chấm mic', ms.sort((a, b) => VOCAB.miss[b] - VOCAB.miss[a]), (k, c) => showWord(c, k),
+    'Bấm để xem nghĩa và nghe lại cách đọc.');
+  if (ms.length) {
+    const b = el('button', 'btn sm ghost', 'Xoá lịch sử đọc sai');
+    b.style.marginTop = '8px';
+    b.onclick = () => { if (confirmBox('Xoá toàn bộ thống kê từ đọc sai?')) { VOCAB.miss = {}; vocabSave(); render(); } };
+    vb.appendChild(b);
+  }
+  v.appendChild(vb);
+
   /* --- sao luu / khoi phuc --- */
   const bk = el('div', 'card');
   bk.appendChild(el('h2', null, 'Sao lưu & khôi phục'));
@@ -1764,7 +1951,7 @@ function exportAll() {
   const progress = {};
   lib.forEach(it => { const d = load(it.id, null); if (d) progress[it.id] = d; });
   if (S.id) progress[S.id] = { cards: S.cards, hard: S.hard, stats: S.stats };
-  return JSON.stringify({ v: 1, at: new Date().toISOString(), library: lib, progress, prefs: S.prefs }, null, 1);
+  return JSON.stringify({ v: 2, at: new Date().toISOString(), library: lib, progress, prefs: S.prefs, vocab: VOCAB }, null, 1);
 }
 function importAll(text) {
   let data;
@@ -1782,6 +1969,16 @@ function importAll(text) {
   });
   cur.sort((a, b) => (b.at || 0) - (a.at || 0));
   libSave(cur);
+  if (data.vocab) {                                  // gop kho tu vung, khong de mat cai da co
+    ['known', 'miss', 'taps', 'gloss'].forEach(f => {
+      const inc = data.vocab[f] || {};
+      Object.keys(inc).forEach(k => {
+        if (f === 'miss' || f === 'taps') VOCAB[f][k] = Math.max(VOCAB[f][k] || 0, inc[k]);
+        else VOCAB[f][k] = inc[k];
+      });
+    });
+    vocabSave();
+  }
   if (S.id) { const d = load(S.id, null); if (d) { S.cards = d.cards || {}; S.hard = d.hard || {}; S.stats = d.stats || S.stats; } }
   toast('Đã nhập: ' + added + ' bài mới, ' + merged + ' bài cập nhật');
   render();

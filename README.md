@@ -136,6 +136,37 @@ Cả ba đều **không** được mớm trước nội dung bài, nên điểm 
 - Nút **A− / A+** trên thanh công cụ đổi cỡ chữ toàn app từ 80% đến 180% (áp dụng cho cả sơ đồ), và ghi nhớ lựa chọn.
 - Nút **Khổ rộng / Khổ hẹp** đổi bề ngang khung nội dung: rộng 1240px (mặc định, ít phải cuộn) hoặc hẹp 800px (dòng ngắn, dễ đọc văn xuôi hơn). Tab Sơ đồ luôn dùng tới 1680px. Trên điện thoại cả hai đều tự co về vừa màn hình.
 
+## Từ khó được xác định thế nào
+
+Công cụ **không** dựa vào một danh sách cố định. Mỗi từ trong bài được chấm điểm khó ngay trên máy, không cần mạng:
+
+| Tín hiệu | Ảnh hưởng |
+|---|---|
+| Số âm tiết | mỗi âm tiết thêm 1,3 điểm |
+| Không nằm trong ~900 từ phổ thông | +1,8 |
+| Mẫu chính tả dễ đọc sai (`-tion`, `-ough`, `kn-`, `-ture`, cụm 3 phụ âm…) | +1,1 mỗi mẫu |
+| Dài từ 10 ký tự | +0,8 |
+| **Bạn từng đọc sai khi chấm mic** | +1,2 mỗi lần (tối đa +3) |
+| **Bạn từng bấm tra từ này** | +0,5 mỗi lần (tối đa +1,6) |
+| **Bạn bấm “Đã biết từ này”** | loại bỏ vĩnh viễn, ở mọi bài |
+
+Từ đạt 3,4 điểm trở lên được gạch chân — khoảng 20–25% số từ của bài.
+
+| Kiểu gạch chân | Nghĩa |
+|---|---|
+| Gạch liền vàng | khó **và** đã có nghĩa (glossary, nghĩa bạn gõ, hoặc do OpenAI tạo) |
+| Gạch nét đứt xám | máy thấy khó nhưng **chưa có nghĩa** — bấm vào để tự gõ hoặc tạo tự động |
+| Nền vàng, viền cam | bạn tự bấm “Đánh dấu khó” |
+| Không gạch | từ phổ thông, hoặc bạn đã bảo là biết rồi |
+
+Danh sách **Từ khó của bài** nằm cuối thanh bên, xếp theo điểm. Tab **Tiến độ → Từ vựng của bạn** quản lý ba kho: đã biết, từng đọc sai, nghĩa đã lưu — dùng chung cho mọi bài và đi theo file sao lưu.
+
+### Tạo nghĩa hàng loạt (tuỳ chọn, cần OpenAI key)
+
+Nút **Tạo nghĩa cho cả bài (n)** ở thanh bên gửi các từ khó chưa có nghĩa kèm nguyên văn bài tới `gpt-4o-mini`, nhận về nghĩa tiếng Việt **đúng ngữ cảnh** và phiên âm IPA, lưu vĩnh viễn trên máy. Mỗi từ chỉ tốn tiền một lần, cả bài khoảng vài chục đồng. Dùng chung key bạn đã nhập ở tab Đọc lại.
+
+Không có key vẫn dùng được bình thường: gạch chân và chấm độ khó chạy offline, bạn tự gõ nghĩa cho từ nào cần.
+
 ## Thêm nghĩa cho từ mới
 
 Bấm vào một từ → gõ nghĩa tiếng Việt → Enter (lưu riêng trong trình duyệt). Muốn nghĩa dùng chung cho mọi bài, thêm vào `glossary.js`:
