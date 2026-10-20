@@ -1879,12 +1879,34 @@ function viewStats(v) {
     'Bấm một từ để đưa trở lại danh sách cần học.');
   sect('Từng đọc sai khi chấm mic', ms.sort((a, b) => VOCAB.miss[b] - VOCAB.miss[a]), (k, c) => showWord(c, k),
     'Bấm để xem nghĩa và nghe lại cách đọc.');
+  const vrow = el('div', 'row'); vrow.style.marginTop = '12px';
   if (ms.length) {
     const b = el('button', 'btn sm ghost', 'Xoá lịch sử đọc sai');
-    b.style.marginTop = '8px';
     b.onclick = () => { if (confirmBox('Xoá toàn bộ thống kê từ đọc sai?')) { VOCAB.miss = {}; vocabSave(); render(); } };
-    vb.appendChild(b);
+    vrow.appendChild(b);
   }
+  const newOnes = gl.filter(k => !GLOSS[k] && VOCAB.gloss[k] && VOCAB.gloss[k].vi);
+  if (newOnes.length) {
+    const b = el('button', 'btn sm', 'Xuất ' + newOnes.length + ' từ mới sang glossary.js');
+    b.title = 'Để đưa vào glossary dùng chung cho mọi người';
+    b.onclick = () => {
+      const code = newOnes.sort().map(k => {
+        const g = VOCAB.gloss[k];
+        const esc2 = s => String(s || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        return '  "' + esc2(k) + '": { vi: "' + esc2(g.vi) + '"' + (g.ipa ? ', ipa: "' + esc2(g.ipa) + '"' : '') + ' },';
+      }).join('\n');
+      const host = $('#glossOut');
+      host.innerHTML = '';
+      host.appendChild(el('p', 'hint', 'Dán khối này vào trong dấu ngoặc của `glossary.js` (trước dòng đóng `};`), chạy `node build-standalone.js` rồi commit — từ đó mọi người dùng chung link đều có các nghĩa này.'));
+      const ta = el('textarea', 'type');
+      ta.style.cssText = 'margin-top:8px;font-family:var(--mono);font-size:calc(12.5px * var(--zoom))';
+      ta.value = code;
+      host.appendChild(ta); ta.select();
+    };
+    vrow.appendChild(b);
+  }
+  vb.appendChild(vrow);
+  const gout = el('div'); gout.id = 'glossOut'; vb.appendChild(gout);
   v.appendChild(vb);
 
   /* --- sao luu / khoi phuc --- */

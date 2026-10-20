@@ -167,6 +167,25 @@ Nút **Tạo nghĩa cho cả bài (n)** ở thanh bên gửi các từ khó chư
 
 Không có key vẫn dùng được bình thường: gạch chân và chấm độ khó chạy offline, bạn tự gõ nghĩa cho từ nào cần.
 
+### Hai kho dữ liệu, và cách đưa từ mới vào kho chung
+
+| | Kho cá nhân | Kho chung (`glossary.js`) |
+|---|---|---|
+| Ở đâu | `localStorage` trình duyệt của từng người | file trong repo, nằm trong `index.html` |
+| Ai thấy | chỉ mình người đó | mọi người mở link |
+| Lớn lên khi nào | bạn gõ nghĩa, bấm *Tạo nghĩa cho cả bài*, đánh dấu *Đã biết*, hoặc đọc sai khi chấm mic | chỉ khi có người sửa file rồi push |
+
+Trang web là **tĩnh**: nó không thể tự ghi ngược dữ liệu lên repo. Từ mới bạn học ở máy mình sẽ **không** tự xuất hiện với người khác.
+
+Muốn đưa lên kho chung, có đường dẫn sẵn: **Tiến độ → Từ vựng của bạn → “Xuất n từ mới sang glossary.js”**. Nút này in ra đúng khối mã cần dán:
+
+```js
+  "environmental": { vi: "thuộc về môi trường", ipa: "/ɪnˌvaɪrənˈmentl/" },
+  "presentation": { vi: "bài thuyết trình", ipa: "/ˌpreznˈteɪʃn/" },
+```
+
+Dán vào trong ngoặc của `glossary.js`, chạy `node build-standalone.js`, rồi commit và push. Khoảng một phút sau mọi người mở link đều có các nghĩa đó.
+
 ## Thêm nghĩa cho từ mới
 
 Bấm vào một từ → gõ nghĩa tiếng Việt → Enter (lưu riêng trong trình duyệt). Muốn nghĩa dùng chung cho mọi bài, thêm vào `glossary.js`:
