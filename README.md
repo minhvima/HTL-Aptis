@@ -1,4 +1,4 @@
-# Aptis Recall Trainer
+# Memorization support - Aptis
 
 Công cụ hỗ trợ học thuộc lòng bài viết tiếng Anh ngắn — dành cho phần Speaking Part 4 của kỳ thi Aptis.
 Sản phẩm tự phát triển cho riêng nhu cầu cá nhân của **Phạm Trung Minh** – ĐHHHVN.
