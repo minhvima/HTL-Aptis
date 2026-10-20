@@ -367,7 +367,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const MIN = 60000, DAY = 86400000;
 
 /* ---------------- 1. PARSER ---------------- */
-const SEP = /^\s*[-_=]{10,}\s*$/;
+const SEP = /^\s*[-_=*~]{4,}\s*$/;                 // dong ngan cach giua phan chu de va bai
+const NOTEXT = /^[\s\-_=*~.·•+#|]*$/;              // dong khong co chu nao -> bo qua
 
 function parseDoc(raw) {
   const text = raw.replace(/\r/g, '').replace(/ /g, ' ');
@@ -385,7 +386,7 @@ function parseDoc(raw) {
     topics.push({ title: s, alt: [] });
   });
 
-  const paras = bodyLines.map(l => l.trim()).filter(Boolean).map((p, i) => ({
+  const paras = bodyLines.map(l => l.trim()).filter(l => l && !NOTEXT.test(l)).map((p, i) => ({
     i, text: p, sentences: splitSentences(p).map((t, j) => ({ t, j }))
   }));
   return { topics, paras, body: paras.map(p => p.text).join('\n\n') };
@@ -1293,7 +1294,25 @@ function drill(v, ids, title, note) {
     c.appendChild(el('p', 'hint', 'Quay lại sau, hoặc chọn đoạn khác ở thanh bên để luyện thêm.'));
     v.appendChild(c); return;
   }
-  if (S.drillI == null || S.drillI >= ids.length) S.drillI = 0;
+  const key = ids.join('|');
+  if (S.drillKey !== key) { S.drillKey = key; S.drillI = 0; }   // doi doan/doi danh sach thi ve cau dau
+  if (S.drillI == null || S.drillI < 0) S.drillI = 0;
+  if (S.drillI >= ids.length) {                                  // da di het luot
+    const done = el('div', 'card empty');
+    done.appendChild(el('div', 'big', 'Xong cả ' + ids.length + ' câu của phần này'));
+    done.appendChild(el('p', 'hint', 'Các câu đã được xếp lịch ôn theo mức bạn tự chấm. Làm lại từ đầu, hoặc chọn đoạn khác ở thanh bên.'));
+    const row = el('div', 'row'); row.style.cssText = 'margin-top:12px;justify-content:center';
+    const again = el('button', 'btn primary', 'Làm lại từ đầu');
+    again.onclick = () => { S.drillI = 0; render(); };
+    row.appendChild(again);
+    if (S.sel !== -1 && S.sel < S.doc.paras.length - 1) {
+      const nextP = el('button', 'btn', 'Sang đoạn ' + (S.sel + 2));
+      nextP.onclick = () => { S.sel++; S.drillI = 0; render(); };
+      row.appendChild(nextP);
+    }
+    done.appendChild(row);
+    v.appendChild(done); return;
+  }
   const byId = {}; S.doc.paras.forEach((p, pi) => p.sentences.forEach(s => byId['s' + pi + '.' + s.j] = s.t));
   const id = ids[S.drillI], target = byId[id] || '';
   const card = cardOf(id);
@@ -1335,8 +1354,30 @@ function drill(v, ids, title, note) {
   const bSkip = el('button', 'btn ghost', 'Hiện đáp án');
   const row2 = el('div', 'row'); row2.style.marginTop = '10px';
   row2.appendChild(bChk); row2.appendChild(bSkip);
-  row2.appendChild(el('span', 'hint', 'Ctrl+Enter: kiểm tra'));
+  row2.appendChild(el('span', 'hint', 'Ctrl+Enter: kiểm tra · chấm điểm xong sẽ tự sang câu sau, hoặc dùng nút chuyển câu bên dưới'));
   c.appendChild(row2); c.appendChild(out);
+
+  /* thanh di chuyen giua cac cau: cham diem KHONG phai cach duy nhat de di tiep */
+  const nav = el('div', 'row'); nav.style.marginTop = '12px';
+  const bPrev = el('button', 'btn sm ghost', '← Câu trước'); bPrev.disabled = S.drillI === 0;
+  bPrev.onclick = () => { S.drillI--; render(); };
+  const bNext = el('button', 'btn sm ghost', 'Câu sau →'); bNext.disabled = S.drillI >= ids.length - 1;
+  bNext.onclick = () => { S.drillI++; render(); };
+  nav.appendChild(bPrev); nav.appendChild(bNext);
+  const jump = el('div', 'row'); jump.style.gap = '4px';
+  ids.forEach((sid, i) => {
+    const d = el('button', 'btn sm ghost', String(i + 1));
+    d.style.cssText = 'padding:2px 8px;min-width:0';
+    if (i === S.drillI) d.setAttribute('aria-pressed', 'true');
+    d.title = (byId[sid] || '').slice(0, 60) + '…';
+    const m = mastery(sid);
+    if (m === 3) d.style.borderColor = 'var(--good)';
+    else if (m >= 1) d.style.borderColor = 'var(--warn)';
+    d.onclick = () => { S.drillI = i; render(); };
+    jump.appendChild(d);
+  });
+  nav.appendChild(jump);
+  c.appendChild(nav);
 
   const next = () => { S.drillI++; render(); };
   const check = () => {
