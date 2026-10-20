@@ -1765,16 +1765,44 @@ function viewStats(v) {
     'Bấm một từ để đưa trở lại danh sách cần học.');
   sect('Từng đọc sai khi chấm mic', ms.sort((a, b) => VOCAB.miss[b] - VOCAB.miss[a]), (k, c) => showWord(c, k),
     'Bấm để xem nghĩa và nghe lại cách đọc.');
+  if (gl.length) {
+    vb.appendChild(el('h3', null, 'Nghĩa đã lưu (' + gl.length + ')'));
+    const list = el('div');
+    gl.sort().forEach(k => {
+      const g = VOCAB.gloss[k];
+      const line = el('div');
+      line.style.cssText = 'display:flex;gap:10px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--line);cursor:pointer';
+      const w = el('b', null, k); w.style.minWidth = '9em';
+      line.appendChild(w);
+      if (g.ipa) { const i = el('span', 'srsline', g.ipa); line.appendChild(i); }
+      const vi = el('span'); vi.style.flex = '1'; vi.textContent = g.vi || '';
+      line.appendChild(vi);
+      line.appendChild(el('span', 'srsline', g.src || ''));
+      const del = el('button', 'btn sm ghost', 'Xoá');
+      del.onclick = ev => { ev.stopPropagation(); delete VOCAB.gloss[k]; vocabSave(); render(); };
+      line.appendChild(del);
+      line.onclick = () => showWord(w, k);
+      list.appendChild(line);
+    });
+    vb.appendChild(list);
+  }
   const vrow = el('div', 'row'); vrow.style.marginTop = '12px';
   if (ms.length) {
     const b = el('button', 'btn sm ghost', 'Xoá lịch sử đọc sai');
     b.onclick = () => { if (confirmBox('Xoá toàn bộ thống kê từ đọc sai?')) { VOCAB.miss = {}; vocabSave(); render(); } };
     vrow.appendChild(b);
   }
-  const newOnes = gl.filter(k => !GLOSS[k] && VOCAB.gloss[k] && VOCAB.gloss[k].vi);
+  // xuat ca tu moi lan tu ban tu sua lai nghia khac voi glossary chung
+  const newOnes = gl.filter(k => {
+    const g = VOCAB.gloss[k];
+    return g && g.vi && (!GLOSS[k] || GLOSS[k].vi !== g.vi);
+  });
+  if (gl.length && !newOnes.length) {
+    vb.appendChild(el('p', 'hint', 'Cả ' + gl.length + ' nghĩa bạn lưu đều trùng với glossary chung nên không có gì cần xuất.'));
+  }
   if (newOnes.length) {
-    const b = el('button', 'btn sm', 'Xuất ' + newOnes.length + ' từ mới sang glossary.js');
-    b.title = 'Để đưa vào glossary dùng chung cho mọi người';
+    const b = el('button', 'btn sm', 'Xuất ' + newOnes.length + ' từ sang glossary.js');
+    b.title = 'Gồm từ chưa có trong glossary chung và từ bạn sửa lại nghĩa';
     b.onclick = () => {
       const code = newOnes.sort().map(k => {
         const g = VOCAB.gloss[k];
