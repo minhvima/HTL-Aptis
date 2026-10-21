@@ -662,18 +662,60 @@ function lookupLocal(key) {
   if (VOCAB.gloss[base] && VOCAB.gloss[base].vi) return Object.assign({ src: VOCAB.gloss[base].src || 'của bạn' }, VOCAB.gloss[base]);
   return null;
 }
-async function lookupApi(word) {
+/* Tra tu dong tu hai nguon mien phi, khong can key:
+   - Wiktionary (Wikimedia): phien am IPA + dinh nghia tieng Anh ngan
+   - MyMemory: nghia tieng Viet (dich may, chi de tham khao)
+   Ket qua duoc cache vinh vien nen moi tu chi goi mang mot lan.      */
+const AUTO = load('autodict', {});
+function autoSave() {
+  const keys = Object.keys(AUTO);
+  if (keys.length > 2500) keys.slice(0, keys.length - 2000).forEach(k => delete AUTO[k]);
+  save('autodict', AUTO);
+}
+async function fetchJSON(url, ms) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms || 8000);
+  try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+function cleanWiki(s) {
+  return String(s || '')
+    .replace(/\{\{[^}]*\}\}/g, '')
+    .replace(/\[\[([^\]|]*\|)?([^\]]*)\]\]/g, '$2')
+    .replace(/'{2,}/g, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+async function lookupWiktionary(word) {
+  const u = 'https://en.wiktionary.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main'
+    + '&titles=' + encodeURIComponent(word) + '&format=json&formatversion=2&origin=*';
+  const j = await fetchJSON(u);
+  const pg = ((j.query || {}).pages || [])[0];
+  if (!pg || pg.missing || !pg.revisions) return null;
+  const txt = pg.revisions[0].slots.main.content;
+  const en = txt.split(/\n==[^=]/).find(s => /^=?English/.test(s)) || txt;
+  const ipa = (en.match(/\{\{IPA\|en\|([^}|]*)/) || [])[1] || '';
+  const pos = (en.match(/\n===+\s*(Noun|Verb|Adjective|Adverb|Phrase|Idiom|Preposition)\s*===+/) || [])[1] || '';
+  const def = [...en.matchAll(/^# ([^\n]{3,160})/gm)].map(m => cleanWiki(m[1])).filter(Boolean)[0] || '';
+  return (ipa || def) ? { ipa: ipa.trim(), def, pos } : null;
+}
+async function lookupViet(word) {
+  const u = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en%7Cvi';
+  const j = await fetchJSON(u, 7000);
+  const t = ((j.responseData || {}).translatedText || '').trim();
+  if (!t || t.toLowerCase() === word.toLowerCase()) return '';
+  return t;
+}
+async function lookupAuto(word) {
   const k = word.toLowerCase();
+  if (AUTO[k] !== undefined) return AUTO[k];
   if (apiCache[k] !== undefined) return apiCache[k];
-  try {
-    const r = await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(k));
-    if (!r.ok) throw 0;
-    const j = await r.json(), e = j[0];
-    const ipa = (e.phonetics || []).map(p => p.text).filter(Boolean)[0] || '';
-    const def = ((e.meanings || [])[0] || {}).definitions || [];
-    const out = { ipa, def: (def[0] || {}).definition || '', pos: ((e.meanings || [])[0] || {}).partOfSpeech || '' };
-    apiCache[k] = out; return out;
-  } catch (e) { apiCache[k] = null; return null; }
+  const [w, v] = await Promise.all([
+    lookupWiktionary(k).catch(() => null),
+    lookupViet(k).catch(() => '')
+  ]);
+  const out = (w || v) ? { ipa: (w && w.ipa) || '', def: (w && w.def) || '', pos: (w && w.pos) || '', vi: v || '' } : null;
+  apiCache[k] = out;
+  if (out) { AUTO[k] = out; autoSave(); }
+  return out;
 }
 
 /* ---------------- 8. Render tien ich ---------------- */
@@ -737,13 +779,24 @@ async function showWord(anchor, phrase) {
   p.style.left = clamp(r.left, 8, window.innerWidth - p.offsetWidth - 8) + 'px';
   p.style.top = (r.bottom + 8 + p.offsetHeight > window.innerHeight ? Math.max(8, r.top - p.offsetHeight - 8) : r.bottom + 8) + 'px';
 
-  if (!local || !local.ipa) {
-    const got = await lookupApi(key);
+  if (!local || !local.ipa || !local.vi) {
+    const cached = AUTO[key] !== undefined || apiCache[key] !== undefined;
+    if (!cached) dfBox.textContent = 'Đang tra Wiktionary…';
+    const got = await lookupAuto(key);
     if (popEl !== p) return;
-    if (got) {
-      if (!ipaBox.textContent) ipaBox.textContent = got.ipa || '';
-      if (got.def) dfBox.textContent = (got.pos ? '(' + got.pos + ') ' : '') + got.def;
+    dfBox.textContent = '';
+    if (!got) {
+      if (!local) dfBox.textContent = 'Không tra được (mất mạng hoặc từ điển không có mục này).';
+      return;
     }
+    if (!ipaBox.textContent) ipaBox.textContent = got.ipa || '';
+    if (!local && got.vi) {
+      viBox.textContent = got.vi;
+      const tag = el('span', 'srsline', '  (máy dịch — sửa lại bên dưới nếu chưa đúng)');
+      viBox.appendChild(tag);
+      if (!inp.value) inp.value = got.vi;
+    }
+    if (got.def) dfBox.textContent = (got.pos ? '(' + got.pos.toLowerCase() + ') ' : '') + got.def;
   }
 }
 
