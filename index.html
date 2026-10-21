@@ -720,21 +720,23 @@ async function lookupWiktionary(word, depth) {
 }
 /* Tu dien Anh-Viet dict.minhqnd.com (CC BY 4.0, @minhqnd): nghia tieng Viet
    that su cua tu dien, kem IPA. Nhanh (~100ms) va co CORS.              */
-const FORM_NOTE = /^(dạng|số nhiều|quá khứ|phân từ|hiện tại|so sánh|cực cấp)/i;
+const FORM_NOTE = /^(dạng|số nhiều|quá khứ|phân từ|hiện tại|so sánh|cực cấp|xem\s)/i;
+/* loai phien am cut kieu "/.ˌmeɪt/" do tra nham tu goc */
+const okIpa = s => /^\/[^/]{3,}\/$/.test(String(s || '').trim()) && /[aeiouɪɛæʌəɑɔʊ]/i.test(s);
 async function lookupMinh(word, depth) {
   const u = 'https://dict.minhqnd.com/api/v1/lookup?word=' + encodeURIComponent(word) + '&lang=en&def_lang=vi';
   const j = await fetchJSON(u, 7000);
   if (!j || !j.exists) return null;
   const res = (j.results || []).find(x => x.lang_code === 'en') || (j.results || [])[0] || {};
-  const ipa = (res.pronunciations || []).map(p => p.ipa).filter(Boolean)[0] || '';
+  const ipa = (res.pronunciations || []).map(p => p.ipa).filter(okIpa)[0] || '';
   const ms = (res.meanings || []).filter(m => String(m.definition || '').trim());
   const good = ms.find(m => !FORM_NOTE.test(m.definition.trim()));
   if (good) return { ipa, vi: good.definition.trim(), pos: good.pos || '' };
-  // trang chi ghi "số nhiều của X" / "quá khứ của X" -> tra tiep tu goc
+  // chi ghi "số nhiều của X", "quá khứ của X" hay "Xem X" -> tra tiep tu goc
   const note = ms.length ? ms[0].definition.trim() : '';
-  const base = (note.match(/của\s+([A-Za-z][A-Za-z-]*)/) || [])[1];
-  if (base && !depth && base.toLowerCase() !== word.toLowerCase()) {
-    const b = await lookupMinh(base, 1).catch(() => null);
+  const base = (note.match(/(?:của|xem)\s+([A-Za-z][A-Za-z-]*)/i) || [])[1];
+  if (base && (depth || 0) < 2 && base.toLowerCase() !== word.toLowerCase()) {
+    const b = await lookupMinh(base, (depth || 0) + 1).catch(() => null);
     if (b && b.vi) return { ipa: ipa || b.ipa, vi: 'dạng của “' + base + '”: ' + b.vi, pos: b.pos };
   }
   return (ipa || note) ? { ipa, vi: note, pos: (ms[0] || {}).pos || '' } : null;
@@ -765,7 +767,7 @@ async function lookupAuto(word) {
   if (!m || !m.ipa || !m.vi) w = await lookupWiktionary(k).catch(() => null);
 
   const out = (m || w) ? {
-    ipa: (m && m.ipa) || (w && w.ipa) || '',
+    ipa: (m && okIpa(m.ipa) ? m.ipa : '') || (w && w.ipa) || '',
     vi: (m && m.vi) || '',
     def: (w && w.def) || '',
     pos: (m && m.pos) || (w && w.pos) || '',
