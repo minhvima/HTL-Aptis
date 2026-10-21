@@ -171,14 +171,16 @@ Không có key vẫn dùng được bình thường: gạch chân và chấm đ�
 
 Từ nào chưa có trong `glossary.js`, bấm vào là công cụ tự tra:
 
-| Nguồn | Cho ra | Độ tin |
+| Nguồn | Cho ra | Dùng khi |
 |---|---|---|
-| **Wiktionary** (Wikimedia) | phiên âm IPA + một định nghĩa tiếng Anh ngắn + từ loại | cao |
-| **MyMemory** | nghĩa tiếng Việt | thấp — máy dịch, hay sai với cụm từ |
+| **[dict.minhqnd.com](https://dict.minhqnd.com)** | phiên âm IPA + **nghĩa tiếng Việt** + từ loại | mặc định, ~100ms |
+| **Wiktionary** (Wikimedia) | IPA + định nghĩa tiếng Anh ngắn | khi từ điển Anh-Việt không có: cụm từ, thành ngữ |
 
-Từ ở dạng biến đổi (*participated*, *responsibilities*, *classmates*) hoặc viết theo lối Anh-Anh (*organised*) được tra tiếp sang từ gốc và ghi rõ *"dạng của …"*.
+Đây là từ điển thật, không phải máy dịch: *breathtaking* → "Hấp dẫn, ngoạn mục."; *humorous* → "Khôi hài, hài hước; hóm hỉnh."
 
-Nghĩa máy dịch chỉ hiện để tham khảo, **không** tự điền vào ô nghĩa của bạn — tránh lưu nhầm một nghĩa sai (ví dụ MyMemory dịch *breathtaking* thành "Hay đấy."). Hãy đọc định nghĩa tiếng Anh rồi tự ghi nghĩa.
+Từ ở dạng biến đổi (*participated*, *responsibilities*, *classmates*) hoặc viết theo lối Anh-Anh (*organised*) được tra tiếp sang từ gốc, tối đa hai bước, và ghi rõ *"dạng của …"*. Phiên âm cụt bị loại và thay bằng phiên âm của Wiktionary.
+
+Dữ liệu từ điển Anh-Việt thuộc dự án [minhqnd/dictionary](https://github.com/minhqnd/dictionary), giấy phép CC BY 4.0 — công cụ ghi nguồn ngay trong ô tra từ.
 
 Mọi kết quả tra được lưu vĩnh viễn trong trình duyệt, nên mỗi từ chỉ gọi mạng một lần và lần sau tra được cả khi offline.
 
