@@ -86,9 +86,41 @@ h1,h2,h3{text-wrap:balance;margin:0}
   .rail.open{display:block}
   .main{padding:16px}
 }
+
+/* ---- điện thoại: nén phần đầu để chừa chỗ cho khu làm việc ---- */
+.tools{display:contents}
+.moretoggle{display:none}
+@media (max-width:720px){
+  .bar{padding:7px 12px;gap:6px}
+  .brand{font-size:calc(17.5px * var(--zoom));line-height:1.15;padding:0;white-space:normal}
+  .brand small{display:none}
+  .bar-spacer{display:none}
+  .filechip{display:none}          /* tên bài chuyển vào thanh bên cho đỡ chật */
+  .railtoggle{margin-left:auto}
+  .moretoggle{display:inline-flex;font-size:calc(17px * var(--zoom));padding:3px 9px;line-height:1}
+  .tools{display:none}
+  .tools.open{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%;margin-top:6px;padding-top:7px;border-top:1px solid var(--line)}
+  .tabs{padding:5px 10px;min-height:0;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:5px 11px;font-size:calc(14.5px * var(--zoom))}
+  .main{padding:12px 12px 48px}
+  .card{padding:12px 13px;margin-bottom:10px}
+  .card h2{font-size:calc(19px * var(--zoom))}
+  .passage{font-size:calc(18.5px * var(--zoom))}
+  /* ghi chú phương pháp: thu lại 2 dòng, chạm để mở */
+  .hint.sci{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+  .hint.sci.open{display:block;-webkit-line-clamp:none}
+  .hint.sci::after{content:" ⌄";color:var(--fg-faint)}
+  .hint.sci.open::after{content:" ⌃"}
+  .grade{min-width:72px;padding:8px 4px}
+  .grade span{display:none}
+}
 @media (min-width:861px){.railtoggle{display:none}}
 
 /* rail */
+.raildoc{display:flex;flex-direction:column;gap:2px;padding:8px 10px;margin-bottom:10px;border-left:3px solid var(--accent);background:var(--surface-2);border-radius:8px}
+.raildoc b{font-size:calc(14.5px * var(--zoom));line-height:1.3}
+.raildoc span{font-size:calc(12.5px * var(--zoom));color:var(--fg-dim);font-variant-numeric:tabular-nums}
 .rail h3{font-size:calc(12.1px * var(--zoom));font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-faint);margin:14px 2px 7px}
 .rail h3:first-child{margin-top:0}
 .topic{padding:7px 9px;border-radius:8px;font-size:calc(15px * var(--zoom));color:var(--fg-dim);border-left:3px solid var(--line);margin-bottom:4px}
@@ -217,16 +249,19 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
       <span>Sản phẩm tự phát triển cho riêng nhu cầu cá nhân của <b class="nb">Phạm Trung Minh</b> <span class="nb">&ndash; ĐH Hàng Hải Việt Nam</span></span>
     </div>
     <div class="bar-spacer"></div>
-    <div class="filechip" id="fileChip" hidden><span>Bài:</span><b id="fileName"></b><span id="fileMeta"></span></div>
-    <button class="btn" id="openBtn">Mở file .txt</button>
-    <button class="btn" id="pasteBtn">Dán bài mới</button>
-    <span class="zoombox">
-      <button class="btn ghost sm" id="zoomOut" title="Thu nhỏ chữ">A&minus;</button>
-      <b id="zoomVal">100%</b>
-      <button class="btn ghost sm" id="zoomIn" title="Phóng to chữ">A+</button>
-    </span>
-    <button class="btn ghost sm" id="widthBtn" title="Đổi bề ngang khung nội dung">Khổ rộng</button>
-    <button class="btn ghost sm" id="themeBtn" title="Đổi nền sáng / tối">Sáng / Tối</button>
+    <div class="filechip" id="fileChip" hidden><span class="lbl">Bài:</span><b id="fileName"></b><span id="fileMeta"></span></div>
+    <button class="btn sm ghost moretoggle" id="moreBtn" title="Thêm tuỳ chọn" aria-expanded="false">&#8942;</button>
+    <div class="tools" id="tools">
+      <button class="btn" id="openBtn">Mở file .txt</button>
+      <button class="btn" id="pasteBtn">Dán bài mới</button>
+      <span class="zoombox">
+        <button class="btn ghost sm" id="zoomOut" title="Thu nhỏ chữ">A&minus;</button>
+        <b id="zoomVal">100%</b>
+        <button class="btn ghost sm" id="zoomIn" title="Phóng to chữ">A+</button>
+      </span>
+      <button class="btn ghost sm" id="widthBtn" title="Đổi bề ngang khung nội dung">Khổ rộng</button>
+      <button class="btn ghost sm" id="themeBtn" title="Đổi nền sáng / tối">Sáng / Tối</button>
+    </div>
     <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
   </header>
 
@@ -845,6 +880,10 @@ function renderRail() {
 
   const ids = allSentIds();
   const m3 = ids.filter(i => mastery(i) === 3).length, m2 = ids.filter(i => mastery(i) === 2).length;
+  const head = el('div', 'raildoc');
+  head.appendChild(el('b', null, S.name || 'Bài đang học'));
+  head.appendChild(el('span', null, S.doc.paras.length + ' đoạn · ' + ids.length + ' câu · ' + words(S.doc.body).length + ' từ'));
+  r.appendChild(head);
   r.appendChild(el('h3', null, 'Tiến độ bài này'));
   const st1 = el('div', 'railstat'); st1.innerHTML = '<span>Vững / Tổng số câu</span><b>' + m3 + ' / ' + ids.length + '</b>'; r.appendChild(st1);
   const mt = el('div', 'meter'); const fill = el('i'); fill.style.width = Math.round(100 * (m3 + m2 * 0.5) / Math.max(1, ids.length)) + '%'; mt.appendChild(fill); r.appendChild(mt);
@@ -951,7 +990,11 @@ function gradeBar(ids, onDone) {
   });
   return g;
 }
-function scopeNote(text) { const p = el('p', 'hint sci', text); return p; }
+function scopeNote(text) {
+  const p = el('p', 'hint sci', text);
+  p.onclick = () => p.classList.toggle('open');   // tren dien thoai ghi chu thu lai 2 dong
+  return p;
+}
 
 /* ----- MODE: Doc & Nghe ----- */
 function viewRead(v) {
@@ -2314,8 +2357,13 @@ function readFile(f) {
   r.readAsText(f, 'utf-8');
 }
 
-$('#openBtn').onclick = () => $('#fileInput').click();
-$('#pasteBtn').onclick = openPaste;
+const closeTools = () => { $('#tools').classList.remove('open'); $('#moreBtn').setAttribute('aria-expanded', 'false'); };
+$('#moreBtn').onclick = () => {
+  const open = $('#tools').classList.toggle('open');
+  $('#moreBtn').setAttribute('aria-expanded', String(open));
+};
+$('#openBtn').onclick = () => { closeTools(); $('#fileInput').click(); };
+$('#pasteBtn').onclick = () => { closeTools(); openPaste(); };
 $('#fileInput').onchange = e => { const f = e.target.files[0]; if (f) readFile(f); };
 $('#railBtn').onclick = () => $('#rail').classList.toggle('open');
 function applyWidthBtn() {
