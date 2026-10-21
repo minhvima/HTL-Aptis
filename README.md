@@ -167,6 +167,21 @@ Nút **Tạo nghĩa cho cả bài (n)** ở thanh bên gửi các từ khó chư
 
 Không có key vẫn dùng được bình thường: gạch chân và chấm độ khó chạy offline, bạn tự gõ nghĩa cho từ nào cần.
 
+### Tra từ tự động, không cần key
+
+Từ nào chưa có trong `glossary.js`, bấm vào là công cụ tự tra:
+
+| Nguồn | Cho ra | Độ tin |
+|---|---|---|
+| **Wiktionary** (Wikimedia) | phiên âm IPA + một định nghĩa tiếng Anh ngắn + từ loại | cao |
+| **MyMemory** | nghĩa tiếng Việt | thấp — máy dịch, hay sai với cụm từ |
+
+Từ ở dạng biến đổi (*participated*, *responsibilities*, *classmates*) hoặc viết theo lối Anh-Anh (*organised*) được tra tiếp sang từ gốc và ghi rõ *"dạng của …"*.
+
+Nghĩa máy dịch chỉ hiện để tham khảo, **không** tự điền vào ô nghĩa của bạn — tránh lưu nhầm một nghĩa sai (ví dụ MyMemory dịch *breathtaking* thành "Hay đấy."). Hãy đọc định nghĩa tiếng Anh rồi tự ghi nghĩa.
+
+Mọi kết quả tra được lưu vĩnh viễn trong trình duyệt, nên mỗi từ chỉ gọi mạng một lần và lần sau tra được cả khi offline.
+
 ### Hai kho dữ liệu, và cách đưa từ mới vào kho chung
 
 | | Kho cá nhân | Kho chung (`glossary.js`) |
