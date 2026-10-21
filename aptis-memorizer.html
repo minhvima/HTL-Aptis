@@ -577,8 +577,8 @@ async function lookupWiktionary(word, depth) {
   // lay dinh nghia dau tien con chu sau khi don template, va tu loai cua DUNG muc do
   let def = '', pos = '';
   for (const m of en.matchAll(/^# ([^\n]{3,200})/gm)) {
-    const t = cleanWiki(m[1]);
-    if (!t || /^(present participle|plural of|past tense|simple past|comparative|superlative)/i.test(t)) continue;
+    const t = cleanWiki(m[1]).replace(/^[\s.,;:()]+/, '').trim();
+    if (t.length < 4 || /^(present participle|plural of|past tense|simple past|comparative|superlative)/i.test(t)) continue;
     def = t;
     const heads = [...en.slice(0, m.index).matchAll(/\n=+\s*(Noun|Verb|Adjective|Adverb|Phrase|Idiom|Preposition|Interjection)\s*=+/g)];
     pos = heads.length ? heads[heads.length - 1][1] : '';
