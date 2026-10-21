@@ -565,7 +565,7 @@ function cleanWiki(s) {
     .replace(/\[\[([^\]|]*\|)?([^\]]*)\]\]/g, '$2')
     .replace(/'{2,}/g, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
-async function lookupWiktionary(word) {
+async function lookupWiktionary(word, depth) {
   const u = 'https://en.wiktionary.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main'
     + '&titles=' + encodeURIComponent(word) + '&format=json&formatversion=2&origin=*';
   const j = await fetchJSON(u);
@@ -583,6 +583,18 @@ async function lookupWiktionary(word) {
     const heads = [...en.slice(0, m.index).matchAll(/\n=+\s*(Noun|Verb|Adjective|Adverb|Phrase|Idiom|Preposition|Interjection)\s*=+/g)];
     pos = heads.length ? heads[heads.length - 1][1] : '';
     break;
+  }
+  // trang dang bien doi (participated, responsibilities...) chi tro ve tu goc
+  if (!def && !depth) {
+    const base = (en.match(/\{\{[a-z ]*of\|en\|([^}|#]+)/i) || [])[1];
+    if (base && base.toLowerCase() !== word.toLowerCase()) {
+      const b = await lookupWiktionary(base.trim(), 1).catch(() => null);
+      if (b) return {
+        ipa: (ipa || b.ipa || '').trim(),
+        def: b.def ? 'dạng của “' + base.trim() + '”: ' + b.def : '',
+        pos: b.pos
+      };
+    }
   }
   return (ipa || def) ? { ipa: ipa.trim(), def, pos } : null;
 }
