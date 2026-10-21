@@ -574,14 +574,15 @@ async function lookupWiktionary(word) {
   const txt = pg.revisions[0].slots.main.content;
   const en = txt.split(/\n==[^=]/).find(s => /^=?English/.test(s)) || txt;
   const ipa = (en.match(/\{\{IPA\|en\|([^}|]*)/) || [])[1] || '';
-  const hit = en.match(/^# ([^\n]{3,160})/m);
-  const def = hit ? cleanWiki(hit[1]) : '';
-  // tu loai lay tu tieu de gan nhat PHIA TREN dinh nghia, khong phai tieu de dau trang
-  let pos = '';
-  if (hit) {
-    const before = en.slice(0, hit.index);
-    const heads = [...before.matchAll(/\n=+\s*(Noun|Verb|Adjective|Adverb|Phrase|Idiom|Preposition|Interjection)\s*=+/g)];
+  // lay dinh nghia dau tien con chu sau khi don template, va tu loai cua DUNG muc do
+  let def = '', pos = '';
+  for (const m of en.matchAll(/^# ([^\n]{3,200})/gm)) {
+    const t = cleanWiki(m[1]);
+    if (!t || /^(present participle|plural of|past tense|simple past|comparative|superlative)/i.test(t)) continue;
+    def = t;
+    const heads = [...en.slice(0, m.index).matchAll(/\n=+\s*(Noun|Verb|Adjective|Adverb|Phrase|Idiom|Preposition|Interjection)\s*=+/g)];
     pos = heads.length ? heads[heads.length - 1][1] : '';
+    break;
   }
   return (ipa || def) ? { ipa: ipa.trim(), def, pos } : null;
 }
