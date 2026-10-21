@@ -586,7 +586,8 @@ async function lookupWiktionary(word, depth) {
   }
   // trang dang bien doi (participated, responsibilities...) chi tro ve tu goc
   if (!def && !depth) {
-    const base = (en.match(/\{\{[a-z ]*of\|en\|([^}|#]+)/i) || [])[1];
+    // bat ca "infl of", "plural of", "alt sp" (organised -> organized), "alt form"...
+    const base = (en.match(/\{\{[a-z. ]*(?:of|sp|form)\|en\|([^}|#]+)/i) || [])[1];
     if (base && base.toLowerCase() !== word.toLowerCase()) {
       const b = await lookupWiktionary(base.trim(), 1).catch(() => null);
       if (b) return {
