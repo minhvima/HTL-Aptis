@@ -693,8 +693,15 @@ async function lookupWiktionary(word) {
   const txt = pg.revisions[0].slots.main.content;
   const en = txt.split(/\n==[^=]/).find(s => /^=?English/.test(s)) || txt;
   const ipa = (en.match(/\{\{IPA\|en\|([^}|]*)/) || [])[1] || '';
-  const pos = (en.match(/\n===+\s*(Noun|Verb|Adjective|Adverb|Phrase|Idiom|Preposition)\s*===+/) || [])[1] || '';
-  const def = [...en.matchAll(/^# ([^\n]{3,160})/gm)].map(m => cleanWiki(m[1])).filter(Boolean)[0] || '';
+  const hit = en.match(/^# ([^\n]{3,160})/m);
+  const def = hit ? cleanWiki(hit[1]) : '';
+  // tu loai lay tu tieu de gan nhat PHIA TREN dinh nghia, khong phai tieu de dau trang
+  let pos = '';
+  if (hit) {
+    const before = en.slice(0, hit.index);
+    const heads = [...before.matchAll(/\n=+\s*(Noun|Verb|Adjective|Adverb|Phrase|Idiom|Preposition|Interjection)\s*=+/g)];
+    pos = heads.length ? heads[heads.length - 1][1] : '';
+  }
   return (ipa || def) ? { ipa: ipa.trim(), def, pos } : null;
 }
 async function lookupViet(word) {
@@ -790,13 +797,17 @@ async function showWord(anchor, phrase) {
       return;
     }
     if (!ipaBox.textContent) ipaBox.textContent = got.ipa || '';
-    if (!local && got.vi) {
-      viBox.textContent = got.vi;
-      const tag = el('span', 'srsline', '  (máy dịch — sửa lại bên dưới nếu chưa đúng)');
-      viBox.appendChild(tag);
-      if (!inp.value) inp.value = got.vi;
-    }
     if (got.def) dfBox.textContent = (got.pos ? '(' + got.pos.toLowerCase() + ') ' : '') + got.def;
+    if (!local && got.vi) {
+      // may dich thuong sai voi cum tu va thanh ngu -> de rieng, khong do san vao o nhap
+      viBox.textContent = '';
+      viBox.appendChild(el('span', 'srsline', 'máy dịch thô: '));
+      const g = el('span', null, got.vi);
+      g.style.color = 'var(--fg-dim)';
+      viBox.appendChild(g);
+      const warn = el('div', 'nt', 'Máy dịch hay sai với cụm từ và thành ngữ — hãy đọc định nghĩa tiếng Anh ở trên rồi tự ghi nghĩa vào ô dưới.');
+      viBox.appendChild(warn);
+    }
   }
 }
 
