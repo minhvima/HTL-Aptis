@@ -15,7 +15,7 @@ Một trang web tĩnh, không máy chủ, không tài khoản: mọi bài học,
 | Khung ý | từ khoá, chữ cái đầu câu, bài xếp lại trật tự |
 | Sơ đồ | mindmap 3 cấp: tên bài → đoạn → câu |
 | Xoá dần | 4 mức xoá tăng dần (method of vanishing cues) |
-| Gõ lại | hiệu ứng kiểm tra, chấm từng từ |
+| Gõ lại | hiệu ứng kiểm tra, chấm từng từ; gõ từng câu, cả đoạn hoặc cả bài |
 | Đọc lại | chấm phát âm bằng micro: trình duyệt / OpenAI API / Whisper chạy trên máy |
 | Ôn tập | giãn cách 1′ → 6′ → 20′ rồi 1 → 3 → 7 → 16 → 35 ngày |
 

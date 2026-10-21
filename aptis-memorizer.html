@@ -1339,19 +1339,21 @@ function viewCloze(v) {
 }
 
 /* ----- Drill chung cho Go lai / On tap ----- */
-function drill(v, ids, title, note) {
-  if (!ids.length) {
+/* items = [{ids:[...], t:'...'}] — mot phan co the la mot cau, mot doan hay ca bai */
+function drill(v, items, title, note) {
+  if (!items.length) {
     const c = el('div', 'card empty');
     c.appendChild(el('div', 'big', 'Không có câu nào đến hạn'));
     c.appendChild(el('p', 'hint', 'Quay lại sau, hoặc chọn đoạn khác ở thanh bên để luyện thêm.'));
     v.appendChild(c); return;
   }
-  const key = ids.join('|');
-  if (S.drillKey !== key) { S.drillKey = key; S.drillI = 0; }   // doi doan/doi danh sach thi ve cau dau
+  const unit = items.every(x => x.ids.length === 1) ? 'câu' : 'phần';
+  const key = items.map(x => x.ids.join('+')).join('|');
+  if (S.drillKey !== key) { S.drillKey = key; S.drillI = 0; }   // doi doan/doi danh sach thi ve dau
   if (S.drillI == null || S.drillI < 0) S.drillI = 0;
-  if (S.drillI >= ids.length) {                                  // da di het luot
+  if (S.drillI >= items.length) {                                // da di het luot
     const done = el('div', 'card empty');
-    done.appendChild(el('div', 'big', 'Xong cả ' + ids.length + ' câu của phần này'));
+    done.appendChild(el('div', 'big', 'Xong cả ' + items.length + ' ' + unit + ' của phần này'));
     done.appendChild(el('p', 'hint', 'Các câu đã được xếp lịch ôn theo mức bạn tự chấm. Làm lại từ đầu, hoặc chọn đoạn khác ở thanh bên.'));
     const row = el('div', 'row'); row.style.cssText = 'margin-top:12px;justify-content:center';
     const again = el('button', 'btn primary', 'Làm lại từ đầu');
@@ -1366,13 +1368,15 @@ function drill(v, ids, title, note) {
     v.appendChild(done); return;
   }
   const byId = {}; S.doc.paras.forEach((p, pi) => p.sentences.forEach(s => byId['s' + pi + '.' + s.j] = s.t));
-  const id = ids[S.drillI], target = byId[id] || '';
+  const item = items[S.drillI], target = item.t, id = item.ids[0];
   const card = cardOf(id);
 
   const c = el('div', 'card');
   const head = el('div', 'row');
   head.appendChild(el('h2', null, title));
-  head.appendChild(el('span', 'srsline', 'câu ' + (S.drillI + 1) + '/' + ids.length + ' · ' + id + ' · reps ' + card.reps + (card.iv ? ' · ' + card.iv + 'd' : '')));
+  head.appendChild(el('span', 'srsline', unit + ' ' + (S.drillI + 1) + '/' + items.length
+    + (item.ids.length > 1 ? ' · ' + item.ids.length + ' câu · ' + words(target).length + ' từ'
+      : ' · ' + id + ' · reps ' + card.reps + (card.iv ? ' · ' + card.iv + 'd' : ''))));
   c.appendChild(head);
   if (note) c.appendChild(scopeNote(note));
 
@@ -1390,15 +1394,24 @@ function drill(v, ids, title, note) {
   c.appendChild(ctl);
 
   const cue = S.cue || defCue;
+  const nKw = clamp(Math.round(words(target).length / 6), 5, 18);
   const cueBox = el('div'); cueBox.style.marginTop = '12px';
-  if (cue === 'keywords') keywords(target, 5).forEach(w => cueBox.appendChild(el('span', 'kw', w)));
-  else if (cue === 'letters') cueBox.appendChild(el('div', 'cue', firstLetterCue(target)));
-  else if (cue === 'audio') { const b = el('button', 'btn sm', 'Phát câu'); b.onclick = () => TTS.say(target); cueBox.appendChild(b); }
+  if (cue === 'keywords') {
+    if (item.ids.length > 1) {              // nhieu cau: tu khoa theo tung cau cho giu dung thu tu
+      item.ids.forEach(sid => {
+        const line = el('div'); line.style.marginBottom = '3px';
+        keywords(byId[sid] || '', 4).forEach(w => line.appendChild(el('span', 'kw', w)));
+        cueBox.appendChild(line);
+      });
+    } else keywords(target, nKw).forEach(w => cueBox.appendChild(el('span', 'kw', w)));
+  } else if (cue === 'letters') cueBox.appendChild(el('div', 'cue', firstLetterCue(target)));
+  else if (cue === 'audio') { const b = el('button', 'btn sm', 'Phát lại'); b.onclick = () => TTS.say(target); cueBox.appendChild(b); }
   c.appendChild(cueBox);
 
   const ta = el('textarea', 'type');
-  ta.placeholder = 'Gõ lại câu này từ trí nhớ… (Ctrl+Enter để kiểm tra)';
+  ta.placeholder = 'Gõ lại ' + (item.ids.length > 1 ? 'phần này' : 'câu này') + ' từ trí nhớ… (Ctrl+Enter để kiểm tra)';
   ta.id = 'drill-' + id;
+  if (item.ids.length > 1) ta.style.minHeight = clamp(90 + item.ids.length * 34, 120, 420) + 'px';
   c.appendChild(ta);
 
   const out = el('div');
@@ -1413,18 +1426,18 @@ function drill(v, ids, title, note) {
 
   /* thanh di chuyen giua cac cau: cham diem KHONG phai cach duy nhat de di tiep */
   const nav = el('div', 'row'); nav.style.marginTop = '12px';
-  const bPrev = el('button', 'btn sm ghost', '← Câu trước'); bPrev.disabled = S.drillI === 0;
+  const bPrev = el('button', 'btn sm ghost', '← ' + (unit === 'câu' ? 'Câu' : 'Phần') + ' trước'); bPrev.disabled = S.drillI === 0;
   bPrev.onclick = () => { S.drillI--; render(); };
-  const bNext = el('button', 'btn sm ghost', 'Câu sau →'); bNext.disabled = S.drillI >= ids.length - 1;
+  const bNext = el('button', 'btn sm ghost', (unit === 'câu' ? 'Câu' : 'Phần') + ' sau →'); bNext.disabled = S.drillI >= items.length - 1;
   bNext.onclick = () => { S.drillI++; render(); };
   nav.appendChild(bPrev); nav.appendChild(bNext);
   const jump = el('div', 'row'); jump.style.gap = '4px';
-  ids.forEach((sid, i) => {
+  items.forEach((it, i) => {
     const d = el('button', 'btn sm ghost', String(i + 1));
     d.style.cssText = 'padding:2px 8px;min-width:0';
     if (i === S.drillI) d.setAttribute('aria-pressed', 'true');
-    d.title = (byId[sid] || '').slice(0, 60) + '…';
-    const m = mastery(sid);
+    d.title = it.t.slice(0, 60) + '…';
+    const m = Math.min.apply(null, it.ids.map(mastery));
     if (m === 3) d.style.borderColor = 'var(--good)';
     else if (m >= 1) d.style.borderColor = 'var(--warn)';
     d.onclick = () => { S.drillI = i; render(); };
@@ -1442,9 +1455,12 @@ function drill(v, ids, title, note) {
     sc.appendChild(el('span', 'hint', 'đúng ' + Math.round(d.acc * 100) + '% số từ, ' + d.extra + ' từ thừa'));
     out.appendChild(sc);
     out.appendChild(renderDiff(d));
-    card.best = Math.max(card.best || 0, Math.round(d.acc * 100));
-    const g = gradeBar([id], next);
-    out.appendChild(g);
+    const pct = Math.round(d.acc * 100);
+    item.ids.forEach(sid => { const cc = cardOf(sid); cc.best = Math.max(cc.best || 0, pct); });
+    if (item.ids.length === S.doc.paras.reduce((a, p) => a + p.sentences.length, 0)) {
+      S.stats.bestWhole = Math.max(S.stats.bestWhole || 0, pct);   // ky luc go lai ca bai
+    }
+    out.appendChild(gradeBar(item.ids, next));
     const sug = q4(d.acc);
     out.appendChild(el('p', 'hint', 'Gợi ý chấm: ' + (sug === 5 ? 'Dễ' : sug === 4 ? 'Ổn' : sug === 3 ? 'Khó' : 'Quên rồi')));
     persist();
@@ -1462,8 +1478,31 @@ function drill(v, ids, title, note) {
 }
 
 function viewType(v) {
-  drill(v, sentsOfSel().map(s => s.id), 'Gõ lại từng câu',
-    'Hiệu ứng kiểm tra (testing effect): tự viết lại từ đầu nhớ lâu hơn hẳn đọc lại nhiều lần. Sai chỗ nào sẽ được tô đỏ ngay.');
+  if (!S.typeScope) S.typeScope = 'sent';
+  const c = el('div', 'card');
+  c.appendChild(el('h2', null, 'Gõ lại'));
+  c.appendChild(scopeNote('Hiệu ứng kiểm tra (testing effect): tự viết lại từ đầu nhớ lâu hơn hẳn đọc lại nhiều lần. Gõ từng câu để sửa chi tiết, gõ cả đoạn hoặc cả bài để luyện nhớ đúng thứ tự ý.'));
+  const row = el('div', 'row'); row.style.marginTop = '10px';
+  row.appendChild(el('span', 'hint', 'Phạm vi:'));
+  [['sent', 'Từng câu'], ['para', S.sel === -1 ? 'Từng đoạn' : 'Cả đoạn'], ['all', 'Cả bài']].forEach(([k, n]) => {
+    const b = el('button', 'btn sm', n);
+    b.setAttribute('aria-pressed', String(S.typeScope === k));
+    b.onclick = () => { S.typeScope = k; S.drillI = 0; render(); };
+    row.appendChild(b);
+  });
+  c.appendChild(row);
+  v.appendChild(c);
+
+  let items;
+  if (S.typeScope === 'all') {
+    items = [{ ids: allSentIds(), t: S.doc.paras.map(p => p.text).join(' ') }];
+  } else if (S.typeScope === 'para') {
+    items = S.doc.paras.map((p, pi) => ({ ids: sentIds(pi), t: p.text }))
+      .filter((x, i) => S.sel === -1 || S.sel === i);
+  } else {
+    items = sentsOfSel().map(s => ({ ids: [s.id], t: s.t }));
+  }
+  drill(v, items, S.typeScope === 'sent' ? 'Gõ lại từng câu' : S.typeScope === 'para' ? 'Gõ lại cả đoạn' : 'Gõ lại cả bài', null);
 }
 function viewSrs(v) {
   const ids = dueIds();
@@ -1475,7 +1514,8 @@ function viewSrs(v) {
     const x = el('div', 'tile'); x.appendChild(el('b', null, String(val))); x.appendChild(el('span', null, n)); t.appendChild(x);
   });
   c.appendChild(t); v.appendChild(c);
-  drill(v, ids, 'Câu đến hạn', null);
+  const byId = {}; S.doc.paras.forEach((p, pi) => p.sentences.forEach(s => byId['s' + pi + '.' + s.j] = s.t));
+  drill(v, ids.map(id => ({ ids: [id], t: byId[id] || '' })), 'Câu đến hạn', null);
 }
 
 /* ---------------- 8b. NHAN DANG GIONG NOI: 3 engine ----------------
