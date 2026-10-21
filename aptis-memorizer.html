@@ -1551,9 +1551,13 @@ const ASR = {
       const chunks = [];
       mr.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
       this.done = new Promise(res => {
-        mr.onstop = () => { this.recording = false; res(new Blob(chunks, { type: mt || 'audio/webm' })); };
+        mr.onstop = () => {
+          this.recording = false;
+          this.secs = (Date.now() - (this.t0 || Date.now())) / 1000;   // do dai ban ghi, do bang dong ho
+          res(new Blob(chunks, { type: mt || 'audio/webm' }));
+        };
       });
-      mr.start(); this.mr = mr; this.recording = true;
+      mr.start(); this.mr = mr; this.recording = true; this.t0 = Date.now();
       return true;
     } finally { this.opening = false; }
   },
@@ -1573,6 +1577,7 @@ async function transcribeOpenAI(blob) {
   fd.append('model', S.prefs.asrModel || 'gpt-4o-transcribe');
   fd.append('language', 'en');
   fd.append('response_format', 'json');
+  fd.append('temperature', '0');   // bam sat am thanh, han che tu "doan" them
   const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST', headers: { Authorization: 'Bearer ' + key }, body: fd
   });
@@ -1870,6 +1875,24 @@ function viewSpeak(v) {
     sc.appendChild(el('b', null, Math.round(d.acc * 100) + '%'));
     sc.appendChild(el('span', 'hint', 'so từng từ với bản gốc'));
     out.appendChild(sc);
+
+    /* Kiem chung: toc do noi. Neu ban ghi ngan bat thuong so voi so tu doc
+       duoc thi diem khong dang tin (may nghe nham hoac tu dien them). */
+    const nW = words(cur.t).length, secs = ASR.secs || 0;
+    if (secs > 0.5) {
+      const wpm = Math.round(nW * d.acc / (secs / 60));
+      const line = el('p', 'hint');
+      line.textContent = 'Tốc độ của bạn: ~' + wpm + ' từ/phút trong ' + secs.toFixed(0)
+        + ' giây (người bản ngữ đọc bài thi thường 120–160 từ/phút).';
+      out.appendChild(line);
+      if (wpm > 260) {
+        const warn = el('p', 'hint sci');
+        warn.style.borderColor = 'var(--bad)';
+        warn.textContent = 'Bản ghi ngắn bất thường so với số từ chấm được — rất có thể máy đã nghe nhầm hoặc tự điền thêm. '
+          + 'Hãy bấm nút phát ở trên nghe lại bản ghi của chính bạn rồi đối chiếu với dòng “Máy nghe được”.';
+        out.appendChild(warn);
+      }
+    }
     out.appendChild(renderDiff(d));
     if (S.spScope === 'all') S.stats.bestWhole = Math.max(S.stats.bestWhole || 0, Math.round(d.acc * 100));
     out.appendChild(gradeBar(cur.ids, () => { S.spI++; render(); }));
