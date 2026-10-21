@@ -599,22 +599,59 @@ async function lookupWiktionary(word, depth) {
   }
   return (ipa || def) ? { ipa: ipa.trim(), def, pos } : null;
 }
-async function lookupViet(word) {
-  const u = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en%7Cvi';
+/* Tu dien Anh-Viet dict.minhqnd.com (CC BY 4.0, @minhqnd): nghia tieng Viet
+   that su cua tu dien, kem IPA. Nhanh (~100ms) va co CORS.              */
+const FORM_NOTE = /^(dạng|số nhiều|quá khứ|phân từ|hiện tại|so sánh|cực cấp)/i;
+async function lookupMinh(word, depth) {
+  const u = 'https://dict.minhqnd.com/api/v1/lookup?word=' + encodeURIComponent(word) + '&lang=en&def_lang=vi';
   const j = await fetchJSON(u, 7000);
-  const t = ((j.responseData || {}).translatedText || '').trim();
-  if (!t || t.toLowerCase() === word.toLowerCase()) return '';
-  return t;
+  if (!j || !j.exists) return null;
+  const res = (j.results || []).find(x => x.lang_code === 'en') || (j.results || [])[0] || {};
+  const ipa = (res.pronunciations || []).map(p => p.ipa).filter(Boolean)[0] || '';
+  const ms = (res.meanings || []).filter(m => String(m.definition || '').trim());
+  const good = ms.find(m => !FORM_NOTE.test(m.definition.trim()));
+  if (good) return { ipa, vi: good.definition.trim(), pos: good.pos || '' };
+  // trang chi ghi "số nhiều của X" / "quá khứ của X" -> tra tiep tu goc
+  const note = ms.length ? ms[0].definition.trim() : '';
+  const base = (note.match(/của\s+([A-Za-z][A-Za-z-]*)/) || [])[1];
+  if (base && !depth && base.toLowerCase() !== word.toLowerCase()) {
+    const b = await lookupMinh(base, 1).catch(() => null);
+    if (b && b.vi) return { ipa: ipa || b.ipa, vi: 'dạng của “' + base + '”: ' + b.vi, pos: b.pos };
+  }
+  return (ipa || note) ? { ipa, vi: note, pos: (ms[0] || {}).pos || '' } : null;
+}
+function baseGuess(w) {
+  if (/ies$/.test(w)) return w.slice(0, -3) + 'y';
+  if (/(ches|shes|sses|xes)$/.test(w)) return w.slice(0, -2);
+  if (/([^s])s$/.test(w)) return w.slice(0, -1);
+  if (/ed$/.test(w)) return w.slice(0, -2);
+  if (/ing$/.test(w)) return w.slice(0, -3);
+  return w;
 }
 async function lookupAuto(word) {
   const k = word.toLowerCase();
   if (AUTO[k] !== undefined) return AUTO[k];
   if (apiCache[k] !== undefined) return apiCache[k];
-  const [w, v] = await Promise.all([
-    lookupWiktionary(k).catch(() => null),
-    lookupViet(k).catch(() => '')
-  ]);
-  const out = (w || v) ? { ipa: (w && w.ipa) || '', def: (w && w.def) || '', pos: (w && w.pos) || '', vi: v || '' } : null;
+
+  let m = await lookupMinh(k).catch(() => null);
+  if (!m || !m.vi) {                                  // thu dang goc don gian
+    const g = baseGuess(k);
+    if (g !== k && g.length > 2) {
+      const b = await lookupMinh(g).catch(() => null);
+      if (b && b.vi) m = { ipa: (m && m.ipa) || b.ipa, vi: 'dạng của “' + g + '”: ' + b.vi, pos: b.pos };
+    }
+  }
+  // Wiktionary bu cho cum tu va cac tu khong co trong tu dien Anh-Viet
+  let w = null;
+  if (!m || !m.ipa || !m.vi) w = await lookupWiktionary(k).catch(() => null);
+
+  const out = (m || w) ? {
+    ipa: (m && m.ipa) || (w && w.ipa) || '',
+    vi: (m && m.vi) || '',
+    def: (w && w.def) || '',
+    pos: (m && m.pos) || (w && w.pos) || '',
+    src: m ? 'dict.minhqnd.com' : 'Wiktionary'
+  } : null;
   apiCache[k] = out;
   if (out) { AUTO[k] = out; autoSave(); }
   return out;
@@ -692,16 +729,14 @@ async function showWord(anchor, phrase) {
       return;
     }
     if (!ipaBox.textContent) ipaBox.textContent = got.ipa || '';
-    if (got.def) dfBox.textContent = (got.pos ? '(' + got.pos.toLowerCase() + ') ' : '') + got.def;
     if (!local && got.vi) {
-      // may dich thuong sai voi cum tu va thanh ngu -> de rieng, khong do san vao o nhap
-      viBox.textContent = '';
-      viBox.appendChild(el('span', 'srsline', 'máy dịch thô: '));
-      const g = el('span', null, got.vi);
-      g.style.color = 'var(--fg-dim)';
-      viBox.appendChild(g);
-      const warn = el('div', 'nt', 'Máy dịch hay sai với cụm từ và thành ngữ — hãy đọc định nghĩa tiếng Anh ở trên rồi tự ghi nghĩa vào ô dưới.');
-      viBox.appendChild(warn);
+      viBox.textContent = (got.pos ? '(' + got.pos.toLowerCase() + ') ' : '') + got.vi;
+    }
+    if (got.def) dfBox.textContent = (!got.vi && got.pos ? '(' + got.pos.toLowerCase() + ') ' : '') + got.def;
+    if (got.src) {
+      const s = el('div', 'srsline', 'nguồn: ' + got.src);
+      s.style.marginTop = '4px';
+      p.insertBefore(s, p.querySelector('.row'));
     }
   }
 }
