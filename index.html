@@ -1687,27 +1687,48 @@ const ASR = {
   }
 };
 
-async function transcribeOpenAI(blob) {
+/* Gom token thanh tu, lay xac suat thap nhat trong tu lam do tin cay.
+   Tu co do tin cay thap = cho ma may "doan" chu khong nghe ro.          */
+function wordConfidence(lp) {
+  const out = [];
+  let cur = null;
+  (lp || []).forEach(t => {
+    const s = String(t.token == null ? '' : t.token);
+    if (!s) return;
+    if (!cur || /^\s/.test(s)) { if (cur) out.push(cur); cur = { w: s, lp: t.logprob }; }
+    else { cur.w += s; cur.lp = Math.min(cur.lp, t.logprob); }
+  });
+  if (cur) out.push(cur);
+  return out
+    .map(x => ({ w: x.w.toLowerCase().replace(/[^a-z']/g, ''), p: Math.exp(x.lp) }))
+    .filter(x => x.w);
+}
+
+async function transcribeOpenAI(blob, withLogprobs) {
   const key = ASR.keyGet();
   if (!key) throw new Error('Chưa nhập API key của OpenAI.');
+  const model = S.prefs.asrModel || 'gpt-4o-transcribe';
   const ext = blob.type.includes('mp4') ? 'mp4' : blob.type.includes('ogg') ? 'ogg' : 'webm';
+  const want = withLogprobs !== false && /^gpt-4o(-mini)?-transcribe/.test(model);
   const fd = new FormData();
   fd.append('file', blob, 'speech.' + ext);
-  fd.append('model', S.prefs.asrModel || 'gpt-4o-transcribe');
+  fd.append('model', model);
   fd.append('language', 'en');
   fd.append('response_format', 'json');
-  fd.append('temperature', '0');   // bam sat am thanh, han che tu "doan" them
+  fd.append('temperature', '0');          // bam sat am thanh, han che tu "doan" them
+  if (want) fd.append('include[]', 'logprobs');
   const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST', headers: { Authorization: 'Bearer ' + key }, body: fd
   });
   if (!r.ok) {
     const t = await r.text().catch(() => '');
+    if (r.status === 400 && want) return transcribeOpenAI(blob, false);   // model khong nhan logprobs
     if (r.status === 401) throw new Error('API key không hợp lệ hoặc đã bị thu hồi.');
     if (r.status === 429) throw new Error('Tài khoản OpenAI hết hạn mức hoặc gọi quá nhanh.');
     throw new Error('OpenAI trả lỗi ' + r.status + ': ' + t.slice(0, 150));
   }
   const j = await r.json();
-  return (j.text || '').trim();
+  return { text: (j.text || '').trim(), conf: wordConfidence(j.logprobs) };
 }
 
 /* Whisper chay trong Web Worker: inference nang, de tren luong chinh
@@ -1976,7 +1997,7 @@ function viewSpeak(v) {
     led.classList.add('live'); led.lastChild.textContent = 'đang ghi…';
     bRec.hidden = true; bStop.hidden = false; bCancel.hidden = false;
   };
-  const showResult = txt => {
+  const showResult = (txt, conf) => {
     out.innerHTML = '';
     if (!txt) { live.textContent = 'Không nghe được gì. Thử đọc to hơn hoặc kiểm tra micro.'; return; }
     live.textContent = 'Máy nghe được: “' + txt + '”';
@@ -1994,6 +2015,28 @@ function viewSpeak(v) {
     sc.appendChild(el('b', null, Math.round(d.acc * 100) + '%'));
     sc.appendChild(el('span', 'hint', 'so từng từ với bản gốc'));
     out.appendChild(sc);
+
+    /* Cho nao may khong nghe ro ma van ghi ra chu = cho no doan.
+       Danh dau de ban biet diem o day khong dang tin.                 */
+    if (conf && conf.length) {
+      const low = conf.filter(x => x.p < 0.7);
+      if (low.length) {
+        const names = [...new Set(low.map(x => x.w))];
+        const box = el('p', 'hint sci');
+        box.style.borderColor = 'var(--warn)';
+        box.appendChild(el('b', null, 'Máy nghe không chắc ' + names.length + ' từ: '));
+        names.slice(0, 12).forEach(w => {
+          const s = el('span', 'kw', w);
+          s.style.cssText = 'background:var(--marker-soft);color:var(--warn)';
+          box.appendChild(s);
+        });
+        box.appendChild(el('span', null, ' — những từ này máy suy từ ngữ cảnh chứ không nghe rõ, '
+          + 'nên hãy nghe lại bản ghi và tự đánh giá phần phát âm đó.'));
+        out.appendChild(box);
+      } else {
+        out.appendChild(el('p', 'hint', 'Máy nghe rõ toàn bộ các từ (độ tin cậy đều trên 70%).'));
+      }
+    }
 
     /* Kiem chung: toc do noi. Neu ban ghi ngan bat thuong so voi so tu doc
        duoc thi diem khong dang tin (may nghe nham hoac tu dien them). */
@@ -2088,11 +2131,11 @@ function viewSpeak(v) {
     const t0 = Date.now();
     const tick = setInterval(() => { live.textContent = note + '  ' + Math.round((Date.now() - t0) / 1000) + 's'; }, 500);
     try {
-      const txt = eng === 'openai'
-        ? await transcribeOpenAI(blob)
-        : await transcribeWhisper(blob, s => { note = s; });
+      let txt, conf = null;
+      if (eng === 'openai') { const o = await transcribeOpenAI(blob); txt = o.text; conf = o.conf; }
+      else txt = await transcribeWhisper(blob, s => { note = s; });
       if (aborted) return;
-      phase = 'idle'; idle(); bCancel.textContent = 'Huỷ'; showResult(txt);
+      phase = 'idle'; idle(); bCancel.textContent = 'Huỷ'; showResult(txt, conf);
     } catch (e) {
       if (aborted) return;
       phase = 'idle'; idle(); bCancel.textContent = 'Huỷ';
