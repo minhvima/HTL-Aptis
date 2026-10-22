@@ -1400,6 +1400,7 @@ window.APTIS_PART2 = [
   "id": "p2-17"
  }
 ];
+window.APTIS_PIC_VER = '202610221122';
 
 </script>
 <script>
@@ -1812,6 +1813,7 @@ window.APTIS_PART3 = [
   "id": "p3-17"
  }
 ];
+window.APTIS_PIC_VER = '202610221122';
 
 </script>
 <script>
@@ -3880,6 +3882,8 @@ const P1 = window.APTIS_PART1 || [];
 const P2 = window.APTIS_PART2 || [];
 const P3 = window.APTIS_PART3 || [];
 const PICSETS = { p2: P2, p3: P3 };
+const PICVER = window.APTIS_PIC_VER ? ('?v=' + window.APTIS_PIC_VER) : '';
+const picSrc = s => s + PICVER;   // tranh doi thi duong dan doi theo, khong dinh cache cu
 const P2KEY = 'p2answers';
 const P2ANS = load(P2KEY, {});
 const p2Save = () => save(P2KEY, P2ANS);
@@ -3995,7 +3999,7 @@ function viewP2(v, part) {
       const card = el('button', 'p2card');
       const pics = el('div', 'pics' + (s.imgs.length > 1 ? ' two' : ''));
       s.imgs.forEach(src => {
-        const im = el('img'); im.src = src; im.alt = 'Tranh bộ ' + s.no; im.loading = 'lazy';
+        const im = el('img'); im.src = picSrc(src); im.alt = 'Tranh bộ ' + s.no; im.loading = 'lazy';
         pics.appendChild(im);
       });
       card.appendChild(pics);
@@ -4026,9 +4030,9 @@ function viewP2(v, part) {
   const pic = el('div', 'card');
   const pics = el('div', 'pics' + (s.imgs.length > 1 ? ' two' : ''));
   s.imgs.forEach(src => {
-    const im = el('img'); im.src = src; im.alt = 'Tranh bộ ' + s.no;
+    const im = el('img'); im.src = picSrc(src); im.alt = 'Tranh bộ ' + s.no;
     im.style.cssText = 'width:100%;max-height:52vh;object-fit:contain;border-radius:8px;cursor:zoom-in';
-    im.onclick = () => window.open(src, '_blank');
+    im.onclick = () => window.open(picSrc(src), '_blank');
     pics.appendChild(im);
   });
   pic.appendChild(pics);

@@ -392,3 +392,4 @@ window.APTIS_PART2 = [
   "id": "p2-17"
  }
 ];
+window.APTIS_PIC_VER = '202610221122';

@@ -7,8 +7,10 @@ Sinh ra:
   data/part2.js        17 bộ Part 2 kèm 3 nhiệm vụ, phần trả lời để trống
   media/part2/NN.jpg   ảnh đã nén cho Part 2
 """
-import io, json, os, re, zipfile
+import datetime, io, json, os, re, zipfile
 from PIL import Image
+
+PIC_STAMP = datetime.datetime.now().strftime('%Y%m%d%H%M')
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', 'Input doc', 'Speaking')
@@ -155,11 +157,14 @@ def shrink_images(doc, sets, part):
             s['imgs'] = names
 
 
-def write_js(path, varname, data, note):
+def write_js(path, varname, data, note, stamp=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
         f.write('/* %s — sinh tự động bởi import-speaking.py, đừng sửa tay */\n' % note)
         f.write('window.%s = %s;\n' % (varname, json.dumps(data, ensure_ascii=False, indent=1)))
+        if stamp:
+            # mốc này gắn vào đường dẫn ảnh để trình duyệt không dùng bản cũ trong cache
+            f.write("window.APTIS_PIC_VER = '%s';\n" % stamp)
 
 
 # Trong file gốc, bản trả lời thứ hai của hai câu này bị đặt nhầm ô:
@@ -191,7 +196,7 @@ if __name__ == '__main__':
         sets = parse_picture_part(doc, part, head, first)
         shrink_images(doc, sets, part)
         write_js(os.path.join(DATA, 'part%d.js' % part), 'APTIS_PART%d' % part, sets,
-                 'Aptis Speaking Part %d' % part)
+                 'Aptis Speaking Part %d' % part, stamp=PIC_STAMP)
         d = os.path.join(MEDIA, 'part%d' % part)
         mb = sum(os.path.getsize(os.path.join(d, f)) for f in os.listdir(d)) / 1048576
         nimg = sum(len(s['imgs']) for s in sets)
