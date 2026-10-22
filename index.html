@@ -203,6 +203,14 @@ label.sw{display:inline-flex;align-items:center;gap:6px;font-size:calc(14.4px * 
 hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .kbd{font-family:var(--mono);font-size:calc(12.6px * var(--zoom));padding:1px 5px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);color:var(--fg-dim)}
 .wordlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+/* lưới tranh Part 2 */
+.p2grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:14px}
+.p2card{display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);text-align:left}
+.p2card:hover{border-color:var(--accent)}
+.p2card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.p2card .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:7px 10px}
+.p2card .cap b{font-size:calc(14.5px * var(--zoom))}
+.p2card .cap span{font-size:calc(12.5px * var(--zoom));color:var(--fg-dim)}
 .overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,20,16,.5)}
 .modal{width:min(760px,100%);max-height:86vh;overflow:auto;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 18px 48px rgba(0,0,0,.28)}
 .modal h2{font-family:var(--display);font-size:calc(23px * var(--zoom));font-weight:600}
@@ -254,6 +262,8 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
     <div class="tools" id="tools">
       <button class="btn" id="openBtn">Mở file .txt</button>
       <button class="btn" id="pasteBtn">Dán bài mới</button>
+      <button class="btn" id="p1Btn">Speaking Part 1</button>
+      <button class="btn" id="p2Btn">Part 2 (tranh)</button>
       <span class="zoombox">
         <button class="btn ghost sm" id="zoomOut" title="Thu nhỏ chữ">A&minus;</button>
         <b id="zoomVal">100%</b>
@@ -274,7 +284,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 </div>
 
 <script>
-/* glossary.js được nhúng sẵn */
+/* glossary.js nhúng sẵn */
 /* Từ điển tra nhanh cho Aptis Memorizer.
    Mở rộng tự do: thêm entry dạng "cụm từ": { vi, ipa, note }
    Khoá viết thường. Cụm nhiều từ sẽ được tự động highlight trong bài. */
@@ -391,6 +401,948 @@ window.APTIS_GLOSSARY = {
   "participated": { vi: "đã tham gia", ipa: "/pɑːˈtɪsɪpeɪtɪd/" },
   "presentation": { vi: "bài thuyết trình", ipa: "/ˌprezənˈteɪʃən/" }
 };
+
+</script>
+<script>
+/* data/part1.js nhúng sẵn */
+/* Aptis Speaking Part 1 — sinh tự động bởi import-speaking.py, đừng sửa tay */
+window.APTIS_PART1 = [
+ {
+  "id": "p1-01",
+  "group": "Nhóm 1: Bản thân, Gia đình & Bạn bè",
+  "q": "Tell me about yourself.",
+  "strategy": "Nêu nghề nghiệp, tính cách và chốt bằng mục tiêu nghề nghiệp ngắn gọn.",
+  "answer": "Currently, / I am working as a software engineer in Hanoi, / which is both challenging and rewarding. / Outside of work, / I consider myself an outgoing person / who enjoys broadening my horizons through reading. / Therefore, / I always strive to become a better version of myself.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "currently",
+    "ipa": "/ˈkʌr.ənt.li/",
+    "pos": "adv",
+    "vi": "Hiện tại"
+   },
+   {
+    "w": "rewarding",
+    "ipa": "/rɪˈwɔː.dɪŋ/",
+    "pos": "adj",
+    "vi": "Bổ ích, đáng giá"
+   },
+   {
+    "w": "broaden horizons",
+    "ipa": "/ˈbrɔː.dən həˈraɪ.zənz/",
+    "pos": "coll",
+    "vi": "Mở rộng tầm nhìn"
+   }
+  ]
+ },
+ {
+  "id": "p1-02",
+  "group": "Nhóm 1: Bản thân, Gia đình & Bạn bè",
+  "q": "Please tell me about your family.",
+  "strategy": "Nêu quy mô gia đình, sự gắn kết và chốt lại tình cảm trân quý gia đình.",
+  "answer": "I come from a close-knit family of four, / including my parents, / younger brother, and myself. / Despite our hectic schedules, / we always make an effort to gather around the dinner table / to share our daily experiences. / In short, / my family is my greatest source of motivation.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "close-knit",
+    "ipa": "/ˌkləʊsˈnɪt/",
+    "pos": "adj",
+    "vi": "Khăng khít, gắn bó"
+   },
+   {
+    "w": "hectic",
+    "ipa": "/ˈhek.tɪk/",
+    "pos": "adj",
+    "vi": "Bận rộn, hối hả"
+   },
+   {
+    "w": "make an effort",
+    "ipa": "/meɪk ən ˈef.ət/",
+    "pos": "coll",
+    "vi": "Cố gắng, nỗ lực"
+   }
+  ]
+ },
+ {
+  "id": "p1-03",
+  "group": "Nhóm 1: Bản thân, Gia đình & Bạn bè",
+  "q": "Tell me about your friend(s) / a member of your family.",
+  "strategy": "Nêu phẩm chất người bạn/người thân và chốt lại giá trị tình bạn mang lại.",
+  "answer": "I want to talk about Nam, / who is my best friend. / He is very reliable / and always supports me in difficult times. / What I like most about him / is that he is always positive. / That is why / I truly value our friendship.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "dependable",
+    "ipa": "/dɪˈpen.də.bəl/",
+    "pos": "adj",
+    "vi": "Đáng tin cậy"
+   },
+   {
+    "w": "admire",
+    "ipa": "/ədˈmaɪər/",
+    "pos": "v",
+    "vi": "Ngưỡng mộ"
+   },
+   {
+    "w": "optimistic",
+    "ipa": "/ˌɒp.tɪˈmɪs.tɪk/",
+    "pos": "adj",
+    "vi": "Lạc quan"
+   }
+  ]
+ },
+ {
+  "id": "p1-04",
+  "group": "Nhóm 2: Thói quen, Sinh hoạt & Sở thích",
+  "q": "Tell me about your typical day.",
+  "strategy": "Chia 2 mốc sáng - tối và chốt bằng sự cân bằng công việc - cuộc sống.",
+  "answer": "On weekdays, / my routine usually begins with a brisk walk at 6 AM, / followed by an intense working day. / In the evening, / I prefer unwinding by listening to music / before hitting the sack around 11 PM. / Overall, / it is a busy but well-balanced routine.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "routine",
+    "ipa": "/ruːˈtiːn/",
+    "pos": "n",
+    "vi": "Thói quen hằng ngày"
+   },
+   {
+    "w": "unwind",
+    "ipa": "/ʌnˈwaɪnd/",
+    "pos": "v",
+    "vi": "Thư giãn, xả hơi"
+   },
+   {
+    "w": "hit the sack",
+    "ipa": "/hɪt ðə sæk/",
+    "pos": "idiom",
+    "vi": "Đi ngủ"
+   }
+  ]
+ },
+ {
+  "id": "p1-05",
+  "group": "Nhóm 2: Thói quen, Sinh hoạt & Sở thích",
+  "q": "What do you like doing in your free time?",
+  "strategy": "Nêu sở thích (làm bánh/đọc sách), 2 lợi ích và câu kết về thói quen cuối tuần.",
+  "answer": "Whenever I have some spare time, I am really into reading books. Diving into a good book not only helps me relieve my stress but also widens my knowledge. / Therefore, / it has become an essential part of my weekend routine.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "spare time",
+    "ipa": "/speər taɪm/",
+    "pos": "coll",
+    "vi": "Thời gian rảnh"
+   },
+   {
+    "w": "relieve stress",
+    "ipa": "/rɪˈliːv stres/",
+    "pos": "coll",
+    "vi": "Giải tỏa căng thẳng"
+   },
+   {
+    "w": "creativity",
+    "ipa": "/ˌkriː.eɪˈtɪv.ə.ti/",
+    "pos": "n",
+    "vi": "Sự sáng tạo"
+   }
+  ]
+ },
+ {
+  "id": "p1-06",
+  "group": "Nhóm 2: Thói quen, Sinh hoạt & Sở thích",
+  "q": "What do you like doing with your friends?",
+  "strategy": "Nêu hoạt động đi cà phê trò chuyện và chốt bằng cảm giác thư giãn tái tạo năng lượng.",
+  "answer": "My friends and I frequently hang out at quiet coffee shops / on weekends. / We usually catch up on each other's lives / and exchange useful advice about our careers. / As a result, / these meetings always help me recharge my energy.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "frequently",
+    "ipa": "/ˈfriː.kwənt.li/",
+    "pos": "adv",
+    "vi": "Thường xuyên"
+   },
+   {
+    "w": "hang out",
+    "ipa": "/hæŋ aʊt/",
+    "pos": "phr v",
+    "vi": "Đi chơi, tụ tập"
+   },
+   {
+    "w": "catch up on",
+    "ipa": "/kætʃ ʌp ɒn/",
+    "pos": "phr v",
+    "vi": "Cập nhật thông tin"
+   }
+  ]
+ },
+ {
+  "id": "p1-07",
+  "group": "Nhóm 3: Nơi chốn, Quê hương & Chỗ ở",
+  "q": "Tell me about your hometown.",
+  "strategy": "Vị trí, cảng biển/kinh tế, con người và chốt lại niềm tự hào về nơi sinh ra.",
+  "answer": "I was born and raised in Hai Phong, / a bustling coastal city in northern Vietnam. / It is renowned for its vibrant harbor / and exceptionally welcoming local residents. / For these reasons, / I am always extremely proud of my hometown.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "bustling",
+    "ipa": "/ˈbʌs.lɪŋ/",
+    "pos": "adj",
+    "vi": "Nhộn nhịp, sôi động"
+   },
+   {
+    "w": "renowned for",
+    "ipa": "/rɪˈnaʊnd fɔːr/",
+    "pos": "adj",
+    "vi": "Nổi tiếng về"
+   },
+   {
+    "w": "resident",
+    "ipa": "/ˈrez.ɪ.dənt/",
+    "pos": "n",
+    "vi": "Cư dân"
+   }
+  ]
+ },
+ {
+  "id": "p1-08",
+  "group": "Nhóm 3: Nơi chốn, Quê hương & Chỗ ở",
+  "q": "Tell me about the place where you live.",
+  "strategy": "Không gian sống tiện nghi và chốt lại sự hài lòng tuyệt đối với nơi ở hiện tại.",
+  "answer": "Currently, / I reside in a [spacious apartment] beautiful house near the city center. / What I appreciate most / is the convenient access to essential amenities / such as supermarkets and fitness centers. / All in all, / it is a very comfortable place to call home.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "reside",
+    "ipa": "/rɪˈzaɪd/",
+    "pos": "v",
+    "vi": "Cư trú, sinh sống"
+   },
+   {
+    "w": "spacious",
+    "ipa": "/ˈspeɪ.ʃəs/",
+    "pos": "adj",
+    "vi": "Rộng rãi"
+   },
+   {
+    "w": "amenities",
+    "ipa": "/əˈmiː.nə.tiz/",
+    "pos": "n",
+    "vi": "Tiện nghi sinh hoạt"
+   }
+  ]
+ },
+ {
+  "id": "p1-09",
+  "group": "Nhóm 3: Nơi chốn, Quê hương & Chỗ ở",
+  "q": "Tell me about a famous place in your country.",
+  "strategy": "Danh thắng biểu tượng, cảnh đẹp thiên nhiên và chốt lời khuyên nên ghé thăm.",
+  "answer": "One of the most iconic destinations in my country is Ha Long Bay. / It is globally recognized for its breathtaking limestone karsts / and emerald waters, / attracting millions of international tourists annually. / Thus, / it is definitely a must-visit attraction.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "iconic",
+    "ipa": "/aɪˈkɒn.ɪk/",
+    "pos": "adj",
+    "vi": "Mang tính biểu tượng"
+   },
+   {
+    "w": "breathtaking",
+    "ipa": "/ˈbreθˌteɪ.kɪŋ/",
+    "pos": "adj",
+    "vi": "Ngoạn mục"
+   },
+   {
+    "w": "annually",
+    "ipa": "/ˈæn.ju.ə.li/",
+    "pos": "adv",
+    "vi": "Hằng năm"
+   }
+  ]
+ },
+ {
+  "id": "p1-10",
+  "group": "Nhóm 3: Nơi chốn, Quê hương & Chỗ ở",
+  "q": "Describe the room you are in.",
+  "strategy": "Mô tả phòng thi yên tĩnh, ánh sáng tốt và chốt về sự tự tin làm bài.",
+  "answer": "I am currently sitting in a well-lit room / designed specifically for computer-based tests. / The atmosphere is exceptionally quiet, / which helps candidates maintain maximum concentration. / Consequently, / I feel totally ready for this examination.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "well-lit",
+    "ipa": "/ˌwel ˈlɪt/",
+    "pos": "adj",
+    "vi": "Đủ ánh sáng"
+   },
+   {
+    "w": "atmosphere",
+    "ipa": "/ˈæt.məs.fɪər/",
+    "pos": "n",
+    "vi": "Bầu không khí"
+   },
+   {
+    "w": "concentration",
+    "ipa": "/ˌkɒn.sənˈtreɪ.ʃən/",
+    "pos": "n",
+    "vi": "Sự tập trung"
+   }
+  ]
+ },
+ {
+  "id": "p1-11",
+  "group": "Nhóm 4: Du lịch & Di chuyển",
+  "q": "Tell me the best way to travel around your country.",
+  "strategy": "So sánh tàu/máy bay với xe máy và chốt tùy thuộc vào sở thích người đi.",
+  "answer": "In my opinion, / traveling by high-speed train or domestic flights / is the most efficient method for long journeys. / However, / renting a motorbike offers a much more authentic experience / for exploring rural areas. / So, / it really depends on your travel style.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "domestic",
+    "ipa": "/dəˈmes.tɪk/",
+    "pos": "adj",
+    "vi": "Nội địa"
+   },
+   {
+    "w": "efficient",
+    "ipa": "/ɪˈfɪʃ.ənt/",
+    "pos": "adj",
+    "vi": "Hiệu quả, tiết kiệm thời gian"
+   },
+   {
+    "w": "authentic",
+    "ipa": "/ɔːˈθen.tɪk/",
+    "pos": "adj",
+    "vi": "Chân thực, bản địa"
+   }
+  ]
+ },
+ {
+  "id": "p1-12",
+  "group": "Nhóm 5: Thời tiết & Mùa",
+  "q": "What is the weather like today?",
+  "strategy": "Miêu tả trời mát mẻ, gió nhẹ và chốt tâm trạng sảng khoái suốt ngày.",
+  "answer": "The weather today is mild and pleasant, / with a gentle breeze / and clear blue skies. / It is actually ideal weather / for outdoor activities or taking a stroll. / Simply put, / such nice weather always puts me in a great mood.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "pleasant",
+    "ipa": "/ˈplez.ənt/",
+    "pos": "adj",
+    "vi": "Dễ chịu"
+   },
+   {
+    "w": "gentle breeze",
+    "ipa": "/ˈdʒen.təl briːz/",
+    "pos": "coll",
+    "vi": "Gió nhẹ hiu hiu"
+   },
+   {
+    "w": "ideal",
+    "ipa": "/aɪˈdɪəl/",
+    "pos": "adj",
+    "vi": "Lý tưởng"
+   }
+  ]
+ },
+ {
+  "id": "p1-13",
+  "group": "Nhóm 5: Thời tiết & Mùa",
+  "q": "What is your favorite season?",
+  "strategy": "Mùa thu, lá vàng, khí hậu mát và chốt cảm giác mong đợi mùa thu hằng năm.",
+  "answer": "My absolute favorite season is autumn. / I appreciate the cool temperatures / and the vibrant colors of falling leaves, / which always give me a sense of peace. / That is why / I always look forward to this time of year.",
+  "alt": "My favorite season is definitely autumn. / I really love the pleasant weather / and the yellow leaves, / which makes me feel peaceful. / That is why / I always wait for this time of year",
+  "vocab": [
+   {
+    "w": "absolute",
+    "ipa": "/ˈæb.sə.luːt/",
+    "pos": "adj",
+    "vi": "Tuyệt đối, hoàn toàn"
+   },
+   {
+    "w": "autumn",
+    "ipa": "/ˈɔː.təm/",
+    "pos": "n",
+    "vi": "Mùa thu"
+   },
+   {
+    "w": "sense of peace",
+    "ipa": "/sens əv piːs/",
+    "pos": "coll",
+    "vi": "Cảm giác bình yên"
+   }
+  ]
+ },
+ {
+  "id": "p1-14",
+  "group": "Nhóm 2: Thói quen, Sinh hoạt & Sở thích",
+  "q": "When do you feel tired?",
+  "strategy": "Tình trạng kiệt sức vì deadline cuối tuần và chốt cách nghỉ ngơi vào chủ nhật.",
+  "answer": "I usually feel exhausted at the end of the week, / especially when handling tight deadlines. / At that point, / my energy is completely drained, / and all I need is a good night’s sleep. / Hence, / I always keep my Sundays completely free.",
+  "alt": "I usually feel exhausted / at the end of the week, / especially when I have too much work. / At that time, / I just want to rest / and get a good sleep. / Therefore, / I always keep my Sundays free.",
+  "vocab": [
+   {
+    "w": "exhausted",
+    "ipa": "/ɪɡˈzɔː.stɪd/",
+    "pos": "adj",
+    "vi": "Kiệt sức"
+   },
+   {
+    "w": "tight deadline",
+    "ipa": "/taɪt ˈded.laɪn/",
+    "pos": "coll",
+    "vi": "Hạn chót gấp rút"
+   },
+   {
+    "w": "drain",
+    "ipa": "/dreɪn/",
+    "pos": "v",
+    "vi": "Làm cạn kiệt năng lượng"
+   }
+  ]
+ },
+ {
+  "id": "p1-15",
+  "group": "Nhóm 2: Thói quen, Sinh hoạt & Sở thích",
+  "q": "What are you wearing today?",
+  "strategy": "Áo thun, quần jean, ưu tiên thoải mái và chốt sự tự tin trong phòng thi.",
+  "answer": "Today, / I am dressed in a casual outfit, / consisting of a white cotton T-shirt / and blue denim jeans. / I always prioritize comfort, / particularly when attending an important examination like this. / In short, / this simple outfit keeps me relaxed and confident.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "casual outfit",
+    "ipa": "/ˈkæʒ.u.əl ˈaʊt.fɪt/",
+    "pos": "coll",
+    "vi": "Trang phục thường ngày"
+   },
+   {
+    "w": "prioritize",
+    "ipa": "/praɪˈɒr.ɪ.taɪz/",
+    "pos": "v",
+    "vi": "Ưu tiên"
+   },
+   {
+    "w": "comfort",
+    "ipa": "/ˈkʌm.fət/",
+    "pos": "n",
+    "vi": "Sự thoải mái"
+   }
+  ]
+ },
+ {
+  "id": "p1-16",
+  "group": "Nhóm 6: Kỷ niệm & Quá khứ",
+  "q": "What did you do last night/ at the weekend?",
+  "strategy": "Đi xem hòa nhạc với bạn bè, nạp lại năng lượng và chốt tuần mới hiệu quả.",
+  "answer": "Last weekend, / I attended a live acoustic concert / with some old classmates. / The performance was truly electrifying, / allowing us to recharge our batteries after a demanding week. / As a result, / I started the new week with great energy.",
+  "alt": "Last weekend, / I spent time cooking a meal / with my family / and took a long walk in the park. / It was a peaceful day, / which helped me clear my mind / after a busy week. / As a result, / I felt totally ready / for the new week",
+  "vocab": [
+   {
+    "w": "electrifying",
+    "ipa": "/iˈlek.trɪ.faɪ.ɪŋ/",
+    "pos": "adj",
+    "vi": "Sôi động, hào hứng"
+   },
+   {
+    "w": "recharge batteries",
+    "ipa": "/riːˈtʃɑːdʒ ˈbæt.ər.iz/",
+    "pos": "idiom",
+    "vi": "Nạp lại năng lượng"
+   },
+   {
+    "w": "demanding",
+    "ipa": "/dɪˈmɑːn.dɪŋ/",
+    "pos": "adj",
+    "vi": "Đòi hỏi cao, vất vả"
+   }
+  ]
+ },
+ {
+  "id": "p1-17",
+  "group": "Nhóm 6: Kỷ niệm & Quá khứ",
+  "q": "Please tell me about your first school.",
+  "strategy": "Ngôi trường cổ kính, sân trường nhiều cây và chốt ký ức tuổi thơ tươi đẹp.",
+  "answer": "My primary school was a quaint institution located within walking distance of my house. / It had a large courtyard with ancient trees, / where my classmates and I spent hours playing traditional games. / Undoubtedly, / those were some of the sweetest memories of my childhood.",
+  "alt": "My primary school / was a small school / located near my house. / It had a big yard / with shady trees, / where my friends and I spent time playing together. / Without doubt, / those were some of the happiest moments / of my childhood",
+  "vocab": [
+   {
+    "w": "quaint",
+    "ipa": "/kweɪnt/",
+    "pos": "adj",
+    "vi": "Cổ kính, mộc mạc"
+   },
+   {
+    "w": "institution",
+    "ipa": "/ˌɪn.stɪˈtʃuː.ʃən/",
+    "pos": "n",
+    "vi": "Trường học, cơ sở"
+   },
+   {
+    "w": "courtyard",
+    "ipa": "/ˈkɔːt.jɑːd/",
+    "pos": "n",
+    "vi": "Sân trong, sân trường"
+   }
+  ]
+ },
+ {
+  "id": "p1-18",
+  "group": "Nhóm 6: Kỷ niệm & Quá khứ",
+  "q": "Tell me about one of your good memories",
+  "strategy": "Nhận giấy báo đỗ đại học, sự tự hào của bố mẹ và chốt bước ngoặt cuộc đời.",
+  "answer": "A memory I cherish deeply / was receiving my university acceptance letter. / Seeing the pride and relief on my parents’ faces / made me feel that my hard work had finally paid off. / To be honest, / it was truly a major milestone in my life.",
+  "alt": "A great memory I have / is receiving my first salary. / Buying small gifts for my parents / made me feel proud and happy / after months of hard work. / Without doubt, / it was an unforgettable day / in my life.",
+  "vocab": [
+   {
+    "w": "cherish",
+    "ipa": "/ˈtʃer.ɪʃ/",
+    "pos": "v",
+    "vi": "Trân trọng, khắc ghi"
+   },
+   {
+    "w": "acceptance",
+    "ipa": "/əkˈsep.təns/",
+    "pos": "n",
+    "vi": "Sự chấp nhận, trúng tuyển"
+   },
+   {
+    "w": "pay off",
+    "ipa": "/peɪ ɒf/",
+    "pos": "phr v",
+    "vi": "Đền đáp, mang lại thành quả"
+   }
+  ]
+ },
+ {
+  "id": "p1-19",
+  "group": "Nhóm 4: Du lịch & Di chuyển",
+  "q": "Describe a journey or trip you remember well.",
+  "strategy": "Chuyến đi Đà Nẵng cùng đồng nghiệp, biển đẹp ẩm thực ngon và chốt kỷ niệm khó quên.",
+  "answer": "I vividly recall a trip to Da Nang / with my closest colleagues last summer. / We were completely mesmerized by the pristine beaches / and had an unforgettable time sampling local street delicacies. / Without doubt, / it was the best vacation I have ever had.",
+  "alt": "A trip I remember well / was going to Da Nang / with my coworkers last summer. / We really enjoyed the clean beach / and tried a lot of local street food, / which was amazing. / Without doubt, / it was the best holiday / I have ever had.",
+  "vocab": [
+   {
+    "w": "vividly recall",
+    "ipa": "/ˈvɪv.ɪd.li rɪˈkɔːl/",
+    "pos": "coll",
+    "vi": "Nhớ rất rõ ràng"
+   },
+   {
+    "w": "mesmerize",
+    "ipa": "/ˈmez.mə.raɪz/",
+    "pos": "v",
+    "vi": "Làm mê hoặc, quyến rũ"
+   },
+   {
+    "w": "delicacy",
+    "ipa": "/ˈdel.ɪ.kə.si/",
+    "pos": "n",
+    "vi": "Món ngon đặc sản"
+   }
+  ]
+ },
+ {
+  "id": "p1-20",
+  "group": "Nhóm 4: Du lịch & Di chuyển",
+  "q": "Describe your journey here today.",
+  "strategy": "Lộ trình buổi sáng, dùng bản đồ tránh tắc đường và chốt việc bắt đầu bài thi đúng giờ.",
+  "answer": "My journey here this morning was relatively smooth. / Although the roads were moderately congested during rush hour, / I managed to arrive on schedule / thanks to using a navigation app. / Therefore, / I was able to begin the test in a calm state of mind.",
+  "alt": "My journey here this morning / went quite well. / Although there was heavy traffic / on the way, / I still managed to arrive on time. / Therefore, / I felt relaxed / and ready for this test.",
+  "vocab": [
+   {
+    "w": "relatively",
+    "ipa": "/ˈrel.ə.tɪv.li/",
+    "pos": "adv",
+    "vi": "Tương đối"
+   },
+   {
+    "w": "congested",
+    "ipa": "/kənˈdʒes.tɪd/",
+    "pos": "adj",
+    "vi": "Đông đúc, ùn tắc"
+   },
+   {
+    "w": "navigation",
+    "ipa": "/ˌnæv.ɪˈɡeɪ.ʃən/",
+    "pos": "n",
+    "vi": "Định vị, dẫn đường"
+   }
+  ]
+ },
+ {
+  "id": "p1-21",
+  "group": "Nhóm 7: Sở thích & Văn hóa",
+  "q": "What is your favorite type of music/singer/film/book/place/sport …?",
+  "strategy": "Nhạc acoustic thư giãn, phục hồi tập trung và chốt lại thói quen nghe nhạc hằng ngày.",
+  "answer": "I am particularly drawn to acoustic melodies. / Listening to soft guitar tunes / has a therapeutic effect on my mind, / helping me reflect on my day and regain focus. / For that reason, / it remains my go-to choice after work.",
+  "alt": "",
+  "vocab": [
+   {
+    "w": "particularly drawn to",
+    "ipa": "/pəˈtɪk.jə.lə.li drɔːn tuː/",
+    "pos": "coll",
+    "vi": "Đặc biệt bị cuốn hút"
+   },
+   {
+    "w": "therapeutic",
+    "ipa": "/ˌθer.əˈpjuː.tɪk/",
+    "pos": "adj",
+    "vi": "Mang tính trị liệu, thư thái"
+   },
+   {
+    "w": "regain focus",
+    "ipa": "/rɪˈɡeɪn ˈfəʊ.kəs/",
+    "pos": "coll",
+    "vi": "Lấy lại tập trung"
+   }
+  ]
+ }
+];
+
+</script>
+<script>
+/* data/part2.js nhúng sẵn */
+/* Aptis Speaking Part 2 — sinh tự động bởi import-speaking.py, đừng sửa tay */
+window.APTIS_PART2 = [
+ {
+  "id": "p2-01",
+  "no": 1,
+  "bank": "",
+  "img": "media/part2/01.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Why do people like eating out with friends?"
+   },
+   {
+    "k": "q2",
+    "q": "Please talk about the last time you ate with friends?"
+   }
+  ]
+ },
+ {
+  "id": "p2-02",
+  "no": 2,
+  "bank": "",
+  "img": "media/part2/02.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Tell me the last time you traveled in a car?"
+   },
+   {
+    "k": "q2",
+    "q": "How can people overcome the time of a long journey?"
+   }
+  ]
+ },
+ {
+  "id": "p2-03",
+  "no": 3,
+  "bank": "7",
+  "img": "media/part2/03.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Describe the last time you did some physical work."
+   },
+   {
+    "k": "q2",
+    "q": "Do you think machines will do all our hard work in the future? Why?"
+   }
+  ]
+ },
+ {
+  "id": "p2-04",
+  "no": 4,
+  "bank": "8",
+  "img": "media/part2/04.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Tell us about the time you give a presentation. How did you feel?"
+   },
+   {
+    "k": "q2",
+    "q": "Why are people scared of public speaking?"
+   }
+  ]
+ },
+ {
+  "id": "p2-05",
+  "no": 5,
+  "bank": "13",
+  "img": "media/part2/05.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Tell me about the last time you used public transport"
+   },
+   {
+    "k": "q2",
+    "q": "How can we increase the number of people using public transport?"
+   }
+  ]
+ },
+ {
+  "id": "p2-06",
+  "no": 6,
+  "bank": "14",
+  "img": "media/part2/06.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Tell me about a time you laughed a lot."
+   },
+   {
+    "k": "q2",
+    "q": "Do you think people from different countries laugh at different things?"
+   }
+  ]
+ },
+ {
+  "id": "p2-07",
+  "no": 7,
+  "bank": "17",
+  "img": "media/part2/07.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "How do children go to school in your country?"
+   },
+   {
+    "k": "q2",
+    "q": "Is it common to live far from school in your country? Why?"
+   }
+  ]
+ },
+ {
+  "id": "p2-08",
+  "no": 8,
+  "bank": "22",
+  "img": "media/part2/08.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Why is it important to play with children?"
+   },
+   {
+    "k": "q2",
+    "q": "How should parents spend time together with their children?"
+   }
+  ]
+ },
+ {
+  "id": "p2-09",
+  "no": 9,
+  "bank": "23",
+  "img": "media/part2/09.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Tell me about an animal that you like?"
+   },
+   {
+    "k": "q2",
+    "q": "How important are animals in our lives?"
+   }
+  ]
+ },
+ {
+  "id": "p2-10",
+  "no": 10,
+  "bank": "24",
+  "img": "media/part2/10.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "What are the benefits of outdoor activities?"
+   },
+   {
+    "k": "q2",
+    "q": "Why do many people like outdoor activities?"
+   }
+  ]
+ },
+ {
+  "id": "p2-11",
+  "no": 11,
+  "bank": "25",
+  "img": "media/part2/11.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "In your country, do parents care about their children?"
+   },
+   {
+    "k": "q2",
+    "q": "Why do parents care about their children?"
+   }
+  ]
+ },
+ {
+  "id": "p2-12",
+  "no": 12,
+  "bank": "27",
+  "img": "media/part2/12.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Do you prefer reading newspapers or watching news?"
+   },
+   {
+    "k": "q2",
+    "q": "Why do people need to watch the news?"
+   }
+  ]
+ },
+ {
+  "id": "p2-13",
+  "no": 13,
+  "bank": "28",
+  "img": "media/part2/13.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "What do you think about living in a crowded city?"
+   },
+   {
+    "k": "q2",
+    "q": "Why do many people hate crowded places?"
+   }
+  ]
+ },
+ {
+  "id": "p2-14",
+  "no": 14,
+  "bank": "29",
+  "img": "media/part2/14.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "When was the last time you went on vacation with someone else?"
+   },
+   {
+    "k": "q2",
+    "q": "What are the benefits of hanging out with other people?"
+   }
+  ]
+ },
+ {
+  "id": "p2-15",
+  "no": 15,
+  "bank": "32",
+  "img": "media/part2/15.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "What are the benefits of viewing artworks?"
+   },
+   {
+    "k": "q2",
+    "q": "Why do people like to go to art exhibitions?"
+   }
+  ]
+ },
+ {
+  "id": "p2-16",
+  "no": 16,
+  "bank": "34",
+  "img": "media/part2/16.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "Tell me the last time you went shopping?"
+   },
+   {
+    "k": "q2",
+    "q": "Why do many people enjoy shopping with friends?"
+   }
+  ]
+ },
+ {
+  "id": "p2-17",
+  "no": 17,
+  "bank": "35",
+  "img": "media/part2/17.jpg",
+  "tasks": [
+   {
+    "k": "describe",
+    "q": "Describe the picture."
+   },
+   {
+    "k": "q1",
+    "q": "What do you usually eat for breakfast?"
+   },
+   {
+    "k": "q2",
+    "q": "Is it important to eat a good breakfast? Why?"
+   }
+  ]
+ }
+];
 
 </script>
 <script>
@@ -2000,14 +2952,32 @@ function viewSpeak(v) {
   const out = el('div', 'resultbox');
   box.appendChild(live); box.appendChild(player); box.appendChild(out);
 
+  /* dong ho dem nguoc theo dinh dang bai thi: Part 1 = 30 giay, Part 2 = 45 giay */
+  const limit = (S.meta && S.meta.limit) || 0;
+  let countH = null;
+  const stopCount = () => { if (countH) { clearInterval(countH); countH = null; } };
+  const startCount = () => {
+    if (!limit) return;
+    const t0 = Date.now();
+    const upd = () => {
+      const left = Math.max(0, limit - Math.round((Date.now() - t0) / 1000));
+      led.lastChild.textContent = 'đang ghi… còn ' + left + 's';
+      led.lastChild.style.color = left <= 5 ? 'var(--bad)' : '';
+      if (left <= 0) { stopCount(); bStop.click(); }
+    };
+    upd(); countH = setInterval(upd, 250);
+  };
+
   const idle = () => {
-    led.classList.remove('live'); led.lastChild.textContent = 'xong';
+    stopCount();
+    led.classList.remove('live'); led.lastChild.textContent = 'xong'; led.lastChild.style.color = '';
     bRec.textContent = 'Bật micro & đọc'; bRec.disabled = false; bRec.hidden = false;
     bStop.hidden = true; bCancel.hidden = true;
   };
   const recUI = () => {
     led.classList.add('live'); led.lastChild.textContent = 'đang ghi…';
     bRec.hidden = true; bStop.hidden = false; bCancel.hidden = false;
+    startCount();
   };
   const showResult = (txt, conf) => {
     out.innerHTML = '';
@@ -2113,6 +3083,7 @@ function viewSpeak(v) {
 
   let cancelled = false, aborted = false, phase = 'idle', lastBlob = null;
   bStop.onclick = () => {
+    stopCount();
     if (ASR.engine() === 'browser') { SR.stop(); return; }
     bStop.hidden = true; bCancel.hidden = true;
     led.classList.remove('live'); led.lastChild.textContent = 'đang xử lý';
@@ -2431,6 +3402,197 @@ function showBackupText(host, data, afterDownload) {
   ta.select();
 }
 
+/* ---------------- 9b. SPEAKING PART 1 & 2 ----------------
+   Part 1: 21 cau hoi, moi cau co mau tra loi -> nap nhu mot "bai" binh
+   thuong nen dung duoc het cac tab da co.
+   Part 2: 17 tranh, moi tranh 3 nhiem vu; ban tu soan cau tra loi roi
+   hoc thuoc giong Part 1.                                            */
+const P1 = window.APTIS_PART1 || [];
+const P2 = window.APTIS_PART2 || [];
+const P2KEY = 'p2answers';
+const P2ANS = load(P2KEY, {});
+const p2Save = () => save(P2KEY, P2ANS);
+
+/* tu vung cot 5 cua tai lieu Part 1 -> kho tra tu, chi them cai chua co */
+(function importP1Vocab() {
+  let n = 0;
+  P1.forEach(x => (x.vocab || []).forEach(v => {
+    const k = vkey(v.w);
+    if (!k || GLOSS[k] || VOCAB.gloss[k]) return;
+    VOCAB.gloss[k] = { vi: v.vi + (v.pos ? ' (' + v.pos + ')' : ''), ipa: v.ipa, src: 'tài liệu Part 1' };
+    n++;
+  }));
+  if (n) vocabSave();
+})();
+
+const chunkless = s => String(s || '').replace(/\s*\/\s*/g, ' ').replace(/\s+/g, ' ').trim();
+
+function p1Text(item, useAlt) {
+  const ans = chunkless(useAlt && item.alt ? item.alt : item.answer);
+  const head = [item.q];
+  if (item.strategy) head.push('(' + item.strategy + ')');
+  return head.join('\n') + '\n------------------------\n' + ans;
+}
+function openP1(item, useAlt) {
+  const name = 'P1.' + item.id.slice(3) + ' ' + item.q.replace(/\?$/, '') + (useAlt ? ' (bản 2)' : '');
+  S.browse = null;
+  loadText(p1Text(item, useAlt), name, { kind: 'p1', limit: 30, src: item.id });
+}
+function p2Text(set, task, answer) {
+  return task.q + '\n(Part 2 — tranh ' + set.no + ', 45 giây)\n------------------------\n' + chunkless(answer);
+}
+function openP2Task(set, ti) {
+  const task = set.tasks[ti];
+  const ans = ((P2ANS[set.id] || {})[task.k] || '').trim();
+  if (!ans) { toast('Bạn chưa soạn câu trả lời cho phần này.'); return; }
+  S.browse = null;
+  loadText(p2Text(set, task, ans), 'P2.' + set.no + '.' + (ti + 1) + ' ' + task.q.slice(0, 40),
+    { kind: 'p2', limit: 45, src: set.id + ':' + task.k });
+}
+
+/* ----- Thu vien Part 1 ----- */
+function viewP1(v) {
+  const c = el('div', 'card');
+  const head = el('div', 'row');
+  head.appendChild(el('h2', null, 'Speaking Part 1 — 21 câu hỏi'));
+  const back = el('button', 'btn sm ghost', 'Đóng');
+  back.onclick = () => { S.browse = null; render(); };
+  head.appendChild(back);
+  c.appendChild(head);
+  c.appendChild(scopeNote('Mỗi câu nói trong 30 giây, lý tưởng 20–25 giây. Mẫu trả lời theo công thức A.R.E.C: trả lời thẳng → lý do/chi tiết → ví dụ/liên hệ → câu kết. Bấm một câu để nạp thành bài học, rồi dùng các tab Xoá dần, Gõ lại, Đọc lại như bình thường.'));
+
+  const groups = [...new Set(P1.map(x => x.group))];
+  if (!S.p1Group) S.p1Group = 'all';
+  const row = el('div', 'row'); row.style.marginTop = '10px';
+  const mk = (k, n) => {
+    const b = el('button', 'btn sm', n);
+    b.setAttribute('aria-pressed', String(S.p1Group === k));
+    b.onclick = () => { S.p1Group = k; render(); };
+    row.appendChild(b);
+  };
+  mk('all', 'Tất cả (' + P1.length + ')');
+  groups.forEach((g, i) => mk(g, 'Nhóm ' + (i + 1)));
+  c.appendChild(row);
+  v.appendChild(c);
+
+  const box = el('div', 'card');
+  let lastGroup = '';
+  P1.filter(x => S.p1Group === 'all' || x.group === S.p1Group).forEach(x => {
+    if (x.group !== lastGroup) { lastGroup = x.group; box.appendChild(el('h3', null, x.group)); }
+    const id = 'doc:' + hash(p1Text(x, false).split(/-{10,}/)[1].trim());
+    const prog = libStats(id);
+    const line = el('div', 'libitem');
+    const open = el('button', 'nm', x.id.slice(3) + '. ' + x.q);
+    open.style.cssText = 'border:0;background:transparent;text-align:left;padding:0';
+    open.onclick = () => openP1(x, false);
+    line.appendChild(open);
+    line.appendChild(el('span', 'mt', x.answer.split(/\s+/).length + ' từ · ' + (x.vocab || []).length + ' từ vựng'
+      + (prog.reps ? ' · đã ôn ' + prog.reps : '')));
+    if (x.alt) {
+      const b2 = el('button', 'del', 'bản 2');
+      b2.title = 'Phiên bản diễn đạt đơn giản hơn';
+      b2.onclick = ev => { ev.stopPropagation(); openP1(x, true); };
+      line.appendChild(b2);
+    }
+    box.appendChild(line);
+  });
+  v.appendChild(box);
+}
+
+/* ----- Thu vien Part 2 ----- */
+function viewP2(v) {
+  const c = el('div', 'card');
+  const head = el('div', 'row');
+  head.appendChild(el('h2', null, 'Speaking Part 2 — 17 bộ tranh'));
+  const back = el('button', 'btn sm ghost', 'Đóng');
+  back.onclick = () => { S.browse = null; S.p2Set = null; render(); };
+  head.appendChild(back);
+  c.appendChild(head);
+
+  if (S.p2Set == null) {
+    c.appendChild(scopeNote('Mỗi bộ gồm 3 nhiệm vụ, mỗi nhiệm vụ 45 giây: tả tranh, rồi hai câu hỏi mở rộng. Tài liệu chưa có bài mẫu nên bạn tự soạn câu trả lời; soạn xong là học thuộc được như Part 1.'));
+    v.appendChild(c);
+    const grid = el('div', 'p2grid');
+    P2.forEach((s, i) => {
+      const card = el('button', 'p2card');
+      const im = el('img'); im.src = s.img; im.alt = 'Tranh ' + s.no; im.loading = 'lazy';
+      card.appendChild(im);
+      const cap = el('div', 'cap');
+      cap.appendChild(el('b', null, 'Bộ ' + s.no));
+      const done = s.tasks.filter(t => ((P2ANS[s.id] || {})[t.k] || '').trim()).length;
+      cap.appendChild(el('span', null, done + '/3 đã soạn'));
+      card.appendChild(cap);
+      card.onclick = () => { S.p2Set = i; render(); };
+      grid.appendChild(card);
+    });
+    v.appendChild(grid);
+    return;
+  }
+
+  const s = P2[S.p2Set];
+  const nav = el('div', 'row');
+  const bp = el('button', 'btn sm ghost', '← Bộ trước'); bp.disabled = S.p2Set === 0;
+  bp.onclick = () => { S.p2Set--; render(); };
+  const bn = el('button', 'btn sm ghost', 'Bộ sau →'); bn.disabled = S.p2Set >= P2.length - 1;
+  bn.onclick = () => { S.p2Set++; render(); };
+  const ball = el('button', 'btn sm ghost', 'Tất cả bộ');
+  ball.onclick = () => { S.p2Set = null; render(); };
+  nav.appendChild(bp); nav.appendChild(bn); nav.appendChild(ball);
+  c.appendChild(nav);
+  v.appendChild(c);
+
+  const pic = el('div', 'card');
+  const im = el('img'); im.src = s.img; im.alt = 'Tranh bộ ' + s.no;
+  im.style.cssText = 'width:100%;max-height:52vh;object-fit:contain;border-radius:8px';
+  pic.appendChild(im);
+  v.appendChild(pic);
+
+  const HINTS = {
+    describe: 'Khung tả tranh: ai / ở đâu / đang làm gì / không khí ra sao / đoán về hoàn cảnh. Mở bằng “This picture shows…”, chốt bằng cảm nhận.',
+    q1: 'Câu hỏi ý kiến hoặc trải nghiệm: trả lời thẳng → hai lý do → một ví dụ cụ thể → câu kết.',
+    q2: 'Câu hỏi mở rộng: nêu quan điểm → giải thích → liên hệ thực tế ở Việt Nam → câu kết.'
+  };
+  s.tasks.forEach((t, ti) => {
+    const box = el('div', 'card');
+    const h = el('div', 'row');
+    h.appendChild(el('h2', null, 'Nhiệm vụ ' + (ti + 1)));
+    h.appendChild(el('span', 'srsline', '45 giây'));
+    const say = el('button', 'btn sm ghost', 'Nghe câu hỏi');
+    say.onclick = () => TTS.say(t.q);
+    h.appendChild(say);
+    box.appendChild(h);
+    box.appendChild(el('p', 'passage', t.q));
+    box.appendChild(scopeNote(HINTS[t.k] || HINTS.q2));
+
+    const ta = el('textarea', 'type');
+    ta.placeholder = 'Soạn câu trả lời của bạn (khoảng 80–110 từ cho 45 giây)…';
+    ta.value = (P2ANS[s.id] || {})[t.k] || '';
+    ta.style.minHeight = '140px';
+    box.appendChild(ta);
+
+    const cnt = el('span', 'hint');
+    const upd = () => {
+      const n = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+      cnt.textContent = n + ' từ · khoảng ' + Math.round(n / 2.2) + ' giây khi nói';
+    };
+    ta.oninput = upd; upd();
+
+    const row = el('div', 'row'); row.style.marginTop = '10px';
+    const bSave = el('button', 'btn primary', 'Lưu câu trả lời');
+    bSave.onclick = () => {
+      P2ANS[s.id] = P2ANS[s.id] || {};
+      P2ANS[s.id][t.k] = ta.value.trim();
+      p2Save(); toast('Đã lưu'); render();
+    };
+    const bLearn = el('button', 'btn', 'Học thuộc phần này');
+    bLearn.disabled = !((P2ANS[s.id] || {})[t.k] || '').trim();
+    bLearn.onclick = () => openP2Task(s, ti);
+    row.appendChild(bSave); row.appendChild(bLearn); row.appendChild(cnt);
+    box.appendChild(row);
+    v.appendChild(box);
+  });
+}
+
 /* ---------------- 10. APP ---------------- */
 function render() {
   if (S.mode !== 'speak' && ASR.stream) ASR.release();   // roi tab ghi am thi tra micro lai
@@ -2445,6 +3607,8 @@ function render() {
     w.appendChild(el('p', 'hint', 'Tiến độ sẽ không được lưu khi đóng trang. Hãy mở file bằng Chrome hoặc Edge ở cửa sổ thường (không phải chế độ ẩn danh). Trong lúc đó, dùng “Xuất file sao lưu” ở tab Tiến độ trước khi đóng.'));
     v.appendChild(w);
   }
+  if (S.browse === 'p1') { renderTabs(); viewP1(v); return; }
+  if (S.browse === 'p2') { renderTabs(); viewP2(v); return; }
   if (!S.doc) { viewEmpty(v); return; }
   const fn = { read: viewRead, skeleton: viewSkeleton, map: viewMap, cloze: viewCloze, type: viewType, speak: viewSpeak, srs: viewSrs, stats: viewStats }[S.mode] || viewRead;
   fn(v);
@@ -2537,10 +3701,11 @@ function renderLibrary(host, compact) {
   host.appendChild(box);
 }
 
-function loadText(raw, name) {
+function loadText(raw, name, meta) {
   const doc = parseDoc(raw);
   if (!doc.paras.length) { toast('Không tìm thấy đoạn tiếng Anh nào trong file.'); return; }
-  S.doc = doc; S.name = name;
+  S.doc = doc; S.name = name; S.meta = meta || { kind: 'txt' };
+  S.browse = null;
   S.id = 'doc:' + hash(doc.body);
   const saved = load(S.id, null);
   S.cards = (saved && saved.cards) || {};
@@ -2640,6 +3805,8 @@ $('#moreBtn').onclick = () => {
 };
 $('#openBtn').onclick = () => { closeTools(); $('#fileInput').click(); };
 $('#pasteBtn').onclick = () => { closeTools(); openPaste(); };
+$('#p1Btn').onclick = () => { closeTools(); S.browse = 'p1'; render(); };
+$('#p2Btn').onclick = () => { closeTools(); S.browse = 'p2'; S.p2Set = null; render(); };
 $('#fileInput').onchange = e => { const f = e.target.files[0]; if (f) readFile(f); };
 $('#railBtn').onclick = () => $('#rail').classList.toggle('open');
 function applyWidthBtn() {

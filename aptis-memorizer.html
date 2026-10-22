@@ -203,6 +203,14 @@ label.sw{display:inline-flex;align-items:center;gap:6px;font-size:calc(14.4px * 
 hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .kbd{font-family:var(--mono);font-size:calc(12.6px * var(--zoom));padding:1px 5px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);color:var(--fg-dim)}
 .wordlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+/* lưới tranh Part 2 */
+.p2grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:14px}
+.p2card{display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);text-align:left}
+.p2card:hover{border-color:var(--accent)}
+.p2card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.p2card .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:7px 10px}
+.p2card .cap b{font-size:calc(14.5px * var(--zoom))}
+.p2card .cap span{font-size:calc(12.5px * var(--zoom));color:var(--fg-dim)}
 .overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,20,16,.5)}
 .modal{width:min(760px,100%);max-height:86vh;overflow:auto;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 18px 48px rgba(0,0,0,.28)}
 .modal h2{font-family:var(--display);font-size:calc(23px * var(--zoom));font-weight:600}
@@ -254,6 +262,8 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
     <div class="tools" id="tools">
       <button class="btn" id="openBtn">Mở file .txt</button>
       <button class="btn" id="pasteBtn">Dán bài mới</button>
+      <button class="btn" id="p1Btn">Speaking Part 1</button>
+      <button class="btn" id="p2Btn">Part 2 (tranh)</button>
       <span class="zoombox">
         <button class="btn ghost sm" id="zoomOut" title="Thu nhỏ chữ">A&minus;</button>
         <b id="zoomVal">100%</b>
@@ -274,6 +284,8 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 </div>
 
 <script src="glossary.js"></script>
+<script src="data/part1.js"></script>
+<script src="data/part2.js"></script>
 <script>
 /* =======================================================================
    APTIS RECALL TRAINER
@@ -1881,14 +1893,32 @@ function viewSpeak(v) {
   const out = el('div', 'resultbox');
   box.appendChild(live); box.appendChild(player); box.appendChild(out);
 
+  /* dong ho dem nguoc theo dinh dang bai thi: Part 1 = 30 giay, Part 2 = 45 giay */
+  const limit = (S.meta && S.meta.limit) || 0;
+  let countH = null;
+  const stopCount = () => { if (countH) { clearInterval(countH); countH = null; } };
+  const startCount = () => {
+    if (!limit) return;
+    const t0 = Date.now();
+    const upd = () => {
+      const left = Math.max(0, limit - Math.round((Date.now() - t0) / 1000));
+      led.lastChild.textContent = 'đang ghi… còn ' + left + 's';
+      led.lastChild.style.color = left <= 5 ? 'var(--bad)' : '';
+      if (left <= 0) { stopCount(); bStop.click(); }
+    };
+    upd(); countH = setInterval(upd, 250);
+  };
+
   const idle = () => {
-    led.classList.remove('live'); led.lastChild.textContent = 'xong';
+    stopCount();
+    led.classList.remove('live'); led.lastChild.textContent = 'xong'; led.lastChild.style.color = '';
     bRec.textContent = 'Bật micro & đọc'; bRec.disabled = false; bRec.hidden = false;
     bStop.hidden = true; bCancel.hidden = true;
   };
   const recUI = () => {
     led.classList.add('live'); led.lastChild.textContent = 'đang ghi…';
     bRec.hidden = true; bStop.hidden = false; bCancel.hidden = false;
+    startCount();
   };
   const showResult = (txt, conf) => {
     out.innerHTML = '';
@@ -1994,6 +2024,7 @@ function viewSpeak(v) {
 
   let cancelled = false, aborted = false, phase = 'idle', lastBlob = null;
   bStop.onclick = () => {
+    stopCount();
     if (ASR.engine() === 'browser') { SR.stop(); return; }
     bStop.hidden = true; bCancel.hidden = true;
     led.classList.remove('live'); led.lastChild.textContent = 'đang xử lý';
@@ -2312,6 +2343,197 @@ function showBackupText(host, data, afterDownload) {
   ta.select();
 }
 
+/* ---------------- 9b. SPEAKING PART 1 & 2 ----------------
+   Part 1: 21 cau hoi, moi cau co mau tra loi -> nap nhu mot "bai" binh
+   thuong nen dung duoc het cac tab da co.
+   Part 2: 17 tranh, moi tranh 3 nhiem vu; ban tu soan cau tra loi roi
+   hoc thuoc giong Part 1.                                            */
+const P1 = window.APTIS_PART1 || [];
+const P2 = window.APTIS_PART2 || [];
+const P2KEY = 'p2answers';
+const P2ANS = load(P2KEY, {});
+const p2Save = () => save(P2KEY, P2ANS);
+
+/* tu vung cot 5 cua tai lieu Part 1 -> kho tra tu, chi them cai chua co */
+(function importP1Vocab() {
+  let n = 0;
+  P1.forEach(x => (x.vocab || []).forEach(v => {
+    const k = vkey(v.w);
+    if (!k || GLOSS[k] || VOCAB.gloss[k]) return;
+    VOCAB.gloss[k] = { vi: v.vi + (v.pos ? ' (' + v.pos + ')' : ''), ipa: v.ipa, src: 'tài liệu Part 1' };
+    n++;
+  }));
+  if (n) vocabSave();
+})();
+
+const chunkless = s => String(s || '').replace(/\s*\/\s*/g, ' ').replace(/\s+/g, ' ').trim();
+
+function p1Text(item, useAlt) {
+  const ans = chunkless(useAlt && item.alt ? item.alt : item.answer);
+  const head = [item.q];
+  if (item.strategy) head.push('(' + item.strategy + ')');
+  return head.join('\n') + '\n------------------------\n' + ans;
+}
+function openP1(item, useAlt) {
+  const name = 'P1.' + item.id.slice(3) + ' ' + item.q.replace(/\?$/, '') + (useAlt ? ' (bản 2)' : '');
+  S.browse = null;
+  loadText(p1Text(item, useAlt), name, { kind: 'p1', limit: 30, src: item.id });
+}
+function p2Text(set, task, answer) {
+  return task.q + '\n(Part 2 — tranh ' + set.no + ', 45 giây)\n------------------------\n' + chunkless(answer);
+}
+function openP2Task(set, ti) {
+  const task = set.tasks[ti];
+  const ans = ((P2ANS[set.id] || {})[task.k] || '').trim();
+  if (!ans) { toast('Bạn chưa soạn câu trả lời cho phần này.'); return; }
+  S.browse = null;
+  loadText(p2Text(set, task, ans), 'P2.' + set.no + '.' + (ti + 1) + ' ' + task.q.slice(0, 40),
+    { kind: 'p2', limit: 45, src: set.id + ':' + task.k });
+}
+
+/* ----- Thu vien Part 1 ----- */
+function viewP1(v) {
+  const c = el('div', 'card');
+  const head = el('div', 'row');
+  head.appendChild(el('h2', null, 'Speaking Part 1 — 21 câu hỏi'));
+  const back = el('button', 'btn sm ghost', 'Đóng');
+  back.onclick = () => { S.browse = null; render(); };
+  head.appendChild(back);
+  c.appendChild(head);
+  c.appendChild(scopeNote('Mỗi câu nói trong 30 giây, lý tưởng 20–25 giây. Mẫu trả lời theo công thức A.R.E.C: trả lời thẳng → lý do/chi tiết → ví dụ/liên hệ → câu kết. Bấm một câu để nạp thành bài học, rồi dùng các tab Xoá dần, Gõ lại, Đọc lại như bình thường.'));
+
+  const groups = [...new Set(P1.map(x => x.group))];
+  if (!S.p1Group) S.p1Group = 'all';
+  const row = el('div', 'row'); row.style.marginTop = '10px';
+  const mk = (k, n) => {
+    const b = el('button', 'btn sm', n);
+    b.setAttribute('aria-pressed', String(S.p1Group === k));
+    b.onclick = () => { S.p1Group = k; render(); };
+    row.appendChild(b);
+  };
+  mk('all', 'Tất cả (' + P1.length + ')');
+  groups.forEach((g, i) => mk(g, 'Nhóm ' + (i + 1)));
+  c.appendChild(row);
+  v.appendChild(c);
+
+  const box = el('div', 'card');
+  let lastGroup = '';
+  P1.filter(x => S.p1Group === 'all' || x.group === S.p1Group).forEach(x => {
+    if (x.group !== lastGroup) { lastGroup = x.group; box.appendChild(el('h3', null, x.group)); }
+    const id = 'doc:' + hash(p1Text(x, false).split(/-{10,}/)[1].trim());
+    const prog = libStats(id);
+    const line = el('div', 'libitem');
+    const open = el('button', 'nm', x.id.slice(3) + '. ' + x.q);
+    open.style.cssText = 'border:0;background:transparent;text-align:left;padding:0';
+    open.onclick = () => openP1(x, false);
+    line.appendChild(open);
+    line.appendChild(el('span', 'mt', x.answer.split(/\s+/).length + ' từ · ' + (x.vocab || []).length + ' từ vựng'
+      + (prog.reps ? ' · đã ôn ' + prog.reps : '')));
+    if (x.alt) {
+      const b2 = el('button', 'del', 'bản 2');
+      b2.title = 'Phiên bản diễn đạt đơn giản hơn';
+      b2.onclick = ev => { ev.stopPropagation(); openP1(x, true); };
+      line.appendChild(b2);
+    }
+    box.appendChild(line);
+  });
+  v.appendChild(box);
+}
+
+/* ----- Thu vien Part 2 ----- */
+function viewP2(v) {
+  const c = el('div', 'card');
+  const head = el('div', 'row');
+  head.appendChild(el('h2', null, 'Speaking Part 2 — 17 bộ tranh'));
+  const back = el('button', 'btn sm ghost', 'Đóng');
+  back.onclick = () => { S.browse = null; S.p2Set = null; render(); };
+  head.appendChild(back);
+  c.appendChild(head);
+
+  if (S.p2Set == null) {
+    c.appendChild(scopeNote('Mỗi bộ gồm 3 nhiệm vụ, mỗi nhiệm vụ 45 giây: tả tranh, rồi hai câu hỏi mở rộng. Tài liệu chưa có bài mẫu nên bạn tự soạn câu trả lời; soạn xong là học thuộc được như Part 1.'));
+    v.appendChild(c);
+    const grid = el('div', 'p2grid');
+    P2.forEach((s, i) => {
+      const card = el('button', 'p2card');
+      const im = el('img'); im.src = s.img; im.alt = 'Tranh ' + s.no; im.loading = 'lazy';
+      card.appendChild(im);
+      const cap = el('div', 'cap');
+      cap.appendChild(el('b', null, 'Bộ ' + s.no));
+      const done = s.tasks.filter(t => ((P2ANS[s.id] || {})[t.k] || '').trim()).length;
+      cap.appendChild(el('span', null, done + '/3 đã soạn'));
+      card.appendChild(cap);
+      card.onclick = () => { S.p2Set = i; render(); };
+      grid.appendChild(card);
+    });
+    v.appendChild(grid);
+    return;
+  }
+
+  const s = P2[S.p2Set];
+  const nav = el('div', 'row');
+  const bp = el('button', 'btn sm ghost', '← Bộ trước'); bp.disabled = S.p2Set === 0;
+  bp.onclick = () => { S.p2Set--; render(); };
+  const bn = el('button', 'btn sm ghost', 'Bộ sau →'); bn.disabled = S.p2Set >= P2.length - 1;
+  bn.onclick = () => { S.p2Set++; render(); };
+  const ball = el('button', 'btn sm ghost', 'Tất cả bộ');
+  ball.onclick = () => { S.p2Set = null; render(); };
+  nav.appendChild(bp); nav.appendChild(bn); nav.appendChild(ball);
+  c.appendChild(nav);
+  v.appendChild(c);
+
+  const pic = el('div', 'card');
+  const im = el('img'); im.src = s.img; im.alt = 'Tranh bộ ' + s.no;
+  im.style.cssText = 'width:100%;max-height:52vh;object-fit:contain;border-radius:8px';
+  pic.appendChild(im);
+  v.appendChild(pic);
+
+  const HINTS = {
+    describe: 'Khung tả tranh: ai / ở đâu / đang làm gì / không khí ra sao / đoán về hoàn cảnh. Mở bằng “This picture shows…”, chốt bằng cảm nhận.',
+    q1: 'Câu hỏi ý kiến hoặc trải nghiệm: trả lời thẳng → hai lý do → một ví dụ cụ thể → câu kết.',
+    q2: 'Câu hỏi mở rộng: nêu quan điểm → giải thích → liên hệ thực tế ở Việt Nam → câu kết.'
+  };
+  s.tasks.forEach((t, ti) => {
+    const box = el('div', 'card');
+    const h = el('div', 'row');
+    h.appendChild(el('h2', null, 'Nhiệm vụ ' + (ti + 1)));
+    h.appendChild(el('span', 'srsline', '45 giây'));
+    const say = el('button', 'btn sm ghost', 'Nghe câu hỏi');
+    say.onclick = () => TTS.say(t.q);
+    h.appendChild(say);
+    box.appendChild(h);
+    box.appendChild(el('p', 'passage', t.q));
+    box.appendChild(scopeNote(HINTS[t.k] || HINTS.q2));
+
+    const ta = el('textarea', 'type');
+    ta.placeholder = 'Soạn câu trả lời của bạn (khoảng 80–110 từ cho 45 giây)…';
+    ta.value = (P2ANS[s.id] || {})[t.k] || '';
+    ta.style.minHeight = '140px';
+    box.appendChild(ta);
+
+    const cnt = el('span', 'hint');
+    const upd = () => {
+      const n = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+      cnt.textContent = n + ' từ · khoảng ' + Math.round(n / 2.2) + ' giây khi nói';
+    };
+    ta.oninput = upd; upd();
+
+    const row = el('div', 'row'); row.style.marginTop = '10px';
+    const bSave = el('button', 'btn primary', 'Lưu câu trả lời');
+    bSave.onclick = () => {
+      P2ANS[s.id] = P2ANS[s.id] || {};
+      P2ANS[s.id][t.k] = ta.value.trim();
+      p2Save(); toast('Đã lưu'); render();
+    };
+    const bLearn = el('button', 'btn', 'Học thuộc phần này');
+    bLearn.disabled = !((P2ANS[s.id] || {})[t.k] || '').trim();
+    bLearn.onclick = () => openP2Task(s, ti);
+    row.appendChild(bSave); row.appendChild(bLearn); row.appendChild(cnt);
+    box.appendChild(row);
+    v.appendChild(box);
+  });
+}
+
 /* ---------------- 10. APP ---------------- */
 function render() {
   if (S.mode !== 'speak' && ASR.stream) ASR.release();   // roi tab ghi am thi tra micro lai
@@ -2326,6 +2548,8 @@ function render() {
     w.appendChild(el('p', 'hint', 'Tiến độ sẽ không được lưu khi đóng trang. Hãy mở file bằng Chrome hoặc Edge ở cửa sổ thường (không phải chế độ ẩn danh). Trong lúc đó, dùng “Xuất file sao lưu” ở tab Tiến độ trước khi đóng.'));
     v.appendChild(w);
   }
+  if (S.browse === 'p1') { renderTabs(); viewP1(v); return; }
+  if (S.browse === 'p2') { renderTabs(); viewP2(v); return; }
   if (!S.doc) { viewEmpty(v); return; }
   const fn = { read: viewRead, skeleton: viewSkeleton, map: viewMap, cloze: viewCloze, type: viewType, speak: viewSpeak, srs: viewSrs, stats: viewStats }[S.mode] || viewRead;
   fn(v);
@@ -2418,10 +2642,11 @@ function renderLibrary(host, compact) {
   host.appendChild(box);
 }
 
-function loadText(raw, name) {
+function loadText(raw, name, meta) {
   const doc = parseDoc(raw);
   if (!doc.paras.length) { toast('Không tìm thấy đoạn tiếng Anh nào trong file.'); return; }
-  S.doc = doc; S.name = name;
+  S.doc = doc; S.name = name; S.meta = meta || { kind: 'txt' };
+  S.browse = null;
   S.id = 'doc:' + hash(doc.body);
   const saved = load(S.id, null);
   S.cards = (saved && saved.cards) || {};
@@ -2521,6 +2746,8 @@ $('#moreBtn').onclick = () => {
 };
 $('#openBtn').onclick = () => { closeTools(); $('#fileInput').click(); };
 $('#pasteBtn').onclick = () => { closeTools(); openPaste(); };
+$('#p1Btn').onclick = () => { closeTools(); S.browse = 'p1'; render(); };
+$('#p2Btn').onclick = () => { closeTools(); S.browse = 'p2'; S.p2Set = null; render(); };
 $('#fileInput').onchange = e => { const f = e.target.files[0]; if (f) readFile(f); };
 $('#railBtn').onclick = () => $('#rail').classList.toggle('open');
 function applyWidthBtn() {
