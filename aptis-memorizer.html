@@ -2379,7 +2379,11 @@ function exportAll() {
   const progress = {};
   lib.forEach(it => { const d = load(it.id, null); if (d) progress[it.id] = d; });
   if (S.id) progress[S.id] = { cards: S.cards, hard: S.hard, stats: S.stats };
-  return JSON.stringify({ v: 2, at: new Date().toISOString(), library: lib, progress, prefs: S.prefs, vocab: VOCAB }, null, 1);
+  return JSON.stringify({
+    v: 3, at: new Date().toISOString(),
+    library: lib, progress, prefs: S.prefs, vocab: VOCAB,
+    p2ans: (typeof P2ANS === 'object' && P2ANS) || {}   // cau tra loi ban soan cho Part 2/3
+  }, null, 1);
 }
 function importAll(text) {
   let data;
@@ -2397,6 +2401,24 @@ function importAll(text) {
   });
   cur.sort((a, b) => (b.at || 0) - (a.at || 0));
   libSave(cur);
+  /* Cau tra loi Part 2/3: ben nao co thi lay; hai ben deu co va khac nhau
+     thi giu ban dai hon, de khong ghi de mat cong soan.                 */
+  if (data.p2ans && typeof P2ANS === 'object') {
+    let them = 0, dai = 0;
+    Object.keys(data.p2ans).forEach(sid => {
+      const inc = data.p2ans[sid] || {};
+      P2ANS[sid] = P2ANS[sid] || {};
+      Object.keys(inc).forEach(k => {
+        const a = String(P2ANS[sid][k] || '').trim(), b = String(inc[k] || '').trim();
+        if (!b) return;
+        if (!a) { P2ANS[sid][k] = b; them++; }
+        else if (a !== b && b.length > a.length) { P2ANS[sid][k] = b; dai++; }
+      });
+    });
+    if (them || dai) p2Save();
+    if (them || dai) toast('Câu trả lời Part 2/3: thêm ' + them + ', cập nhật ' + dai);
+  }
+
   if (data.vocab) {                                  // gop kho tu vung, khong de mat cai da co
     ['known', 'miss', 'taps', 'gloss'].forEach(f => {
       const inc = data.vocab[f] || {};
