@@ -210,6 +210,9 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .p2card .pics{display:grid;grid-template-columns:1fr;gap:2px}
 .p2card .pics.two{grid-template-columns:1fr 1fr}
 .p2card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.picbar{position:sticky;top:0;z-index:10;padding:10px 12px;background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.picbar h2{font-size:calc(16px * var(--zoom))}
+.picbar .pics{margin-top:8px}
 .pics{display:grid;grid-template-columns:1fr;gap:8px}
 .pics.two{grid-template-columns:1fr 1fr}
 @media (max-width:720px){.pics.two{grid-template-columns:1fr}}
@@ -3884,6 +3887,41 @@ const P3 = window.APTIS_PART3 || [];
 const PICSETS = { p2: P2, p3: P3 };
 const PICVER = window.APTIS_PIC_VER ? ('?v=' + window.APTIS_PIC_VER) : '';
 const picSrc = s => s + PICVER;   // tranh doi thi duong dan doi theo, khong dinh cache cu
+
+/* bai dang hoc thuoc tung Part 2/3 nao -> de con hien tranh kem theo */
+function metaSet() {
+  const src = S.meta && S.meta.src;
+  if (!src) return null;
+  const id = String(src).split(':')[0];
+  const part = id.slice(0, 2);
+  return (PICSETS[part] || []).find(s => s.id === id) || null;
+}
+function picPanel(v) {
+  const set = metaSet();
+  if (!set || !set.imgs || !set.imgs.length) return;
+  const c = el('div', 'card picbar');
+  const head = el('div', 'row');
+  head.appendChild(el('h2', null, 'Tranh đề — Part ' + set.id.charAt(1) + ', bộ ' + set.no));
+  const hidden = S.prefs.hidePic === true;
+  const b = el('button', 'btn sm ghost', hidden ? 'Hiện tranh' : 'Thu gọn');
+  b.onclick = () => { S.prefs.hidePic = !hidden; persist(); render(); };
+  head.appendChild(b);
+  const bBack = el('button', 'btn sm ghost', 'Về bộ đề');
+  bBack.onclick = () => { S.browse = set.id.slice(0, 2); S.p2Set = (PICSETS[set.id.slice(0, 2)] || []).indexOf(set); render(); };
+  head.appendChild(bBack);
+  c.appendChild(head);
+  if (!hidden) {
+    const pics = el('div', 'pics' + (set.imgs.length > 1 ? ' two' : ''));
+    set.imgs.forEach(src => {
+      const im = el('img'); im.src = picSrc(src); im.alt = 'Tranh đề';
+      im.style.cssText = 'width:100%;max-height:30vh;object-fit:contain;border-radius:8px;cursor:zoom-in';
+      im.onclick = () => window.open(picSrc(src), '_blank');
+      pics.appendChild(im);
+    });
+    c.appendChild(pics);
+  }
+  v.appendChild(c);
+}
 const P2KEY = 'p2answers';
 const P2ANS = load(P2KEY, {});
 const p2Save = () => save(P2KEY, P2ANS);
@@ -4105,6 +4143,7 @@ function render() {
   if (S.browse === 'p1') { renderTabs(); viewP1(v); return; }
   if (S.browse === 'p2' || S.browse === 'p3') { renderTabs(); viewP2(v, S.browse); return; }
   if (!S.doc) { viewEmpty(v); return; }
+  picPanel(v);                      // bai Part 2/3: luon co tranh de truoc mat
   const fn = { read: viewRead, skeleton: viewSkeleton, map: viewMap, cloze: viewCloze, type: viewType, speak: viewSpeak, srs: viewSrs, stats: viewStats }[S.mode] || viewRead;
   fn(v);
 }
