@@ -91,7 +91,18 @@ def parse_picture_part(doc, part, head_re, first_task):
     sets, cur, started = [], None, False
     for b in blocks:
         t = text_of(b)
-        imgs = [rid2file[i] for i in re.findall(r'r:embed="([^"]+)"', b) if i in rid2file]
+        imgs = []
+        for d in re.findall(r'<w:drawing>.*?</w:drawing>', b, re.S):
+            rid = re.search(r'r:embed="([^"]+)"', d)
+            if not rid or rid.group(1) not in rid2file:
+                continue
+            # Word cắt ảnh bằng srcRect (đơn vị 1/1000 %) chứ không sửa file gốc
+            m = re.search(r'<a:srcRect([^/>]*)/>', d)
+            crop = {}
+            if m:
+                for k, v in re.findall(r'\b([ltrb])="(-?\d+)"', m.group(1)):
+                    crop[k] = int(v) / 100000.0
+            imgs.append({'src': rid2file[rid.group(1)], 'crop': crop})
         if re.match(r'^SPEAKING PART %d' % part, t, re.I):
             started = True
             continue
@@ -125,9 +136,18 @@ def shrink_images(doc, sets, part):
     with zipfile.ZipFile(doc) as z:
         for s in sets:
             names = []
-            for j, src in enumerate(s['imgs']):
-                raw = z.read('word/media/' + src)
+            for j, ref in enumerate(s['imgs']):
+                raw = z.read('word/media/' + ref['src'])
                 im = Image.open(io.BytesIO(raw)).convert('RGB')
+                c = ref.get('crop') or {}
+                if c:
+                    w, h = im.size
+                    box = (int(w * c.get('l', 0)), int(h * c.get('t', 0)),
+                           int(w * (1 - c.get('r', 0))), int(h * (1 - c.get('b', 0))))
+                    if box[2] - box[0] > 20 and box[3] - box[1] > 20:
+                        im = im.crop(box)
+                        print('  cat anh %s cho bo %d: %dx%d -> %dx%d'
+                              % (ref['src'], s['no'], w, h, im.size[0], im.size[1]))
                 im.thumbnail((1100, 1100), Image.LANCZOS)
                 name = '%02d%s.jpg' % (s['no'], 'ab'[j] if len(s['imgs']) > 1 else '')
                 im.save(os.path.join(outdir, name), 'JPEG', quality=72, optimize=True, progressive=True)
