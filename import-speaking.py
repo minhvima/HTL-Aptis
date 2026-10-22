@@ -14,8 +14,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', 'Input doc', 'Speaking')
 P1_DOC = os.path.join(SRC, 'M- Aptis_Speaking_Part_1_Chuan_B2_Updated.docx')
 P2_DOC = os.path.join(SRC, 'VMEC_Speaking Aptis - Part 1-2 (apdate 08.10).docx')
+P3_DOC = os.path.join(SRC, 'VMEC_Speaking Aptis - Parrt 3 (updated 08.10).docx')
 DATA = os.path.join(HERE, 'data')
-MEDIA = os.path.join(HERE, 'media', 'part2')
+MEDIA = os.path.join(HERE, 'media')
 
 TAG = re.compile(r'<[^>]+>')
 
@@ -73,12 +74,17 @@ def parse_part1():
     return out
 
 
-# ---------- Part 2 ----------
-def parse_part2():
-    xml = xml_of(P2_DOC)
-    rels = xml_of(P2_DOC, 'word/_rels/document.xml.rels')
-    rid2file = dict(re.findall(r'Id="([^"]+)"[^>]*Target="media/([^"]+)"', rels))
+# ---------- Part 2 & 3: đề có tranh ----------
+# Part 2 một tranh, Part 3 hai tranh để so sánh; cấu trúc còn lại giống nhau.
+HEAD_P2 = re.compile(r'^(\d+)\.\s*Describe the picture(?:\s*\((\d+)\))?', re.I)
+HEAD_P3 = re.compile(r'^(\d+)\.\s*(?:Describe (?:the )?(?:2|two) pictures?'
+                     r'|Tell me what you see in the two pictures)(?:\s*\((\d+)\))?', re.I)
 
+
+def parse_picture_part(doc, part, head_re, first_task):
+    xml = xml_of(doc)
+    rels = xml_of(doc, 'word/_rels/document.xml.rels')
+    rid2file = dict(re.findall(r'Id="([^"]+)"[^>]*Target="media/([^"]+)"', rels))
     body = re.search(r'<w:body>([\s\S]*)</w:body>', xml).group(1)
     blocks = re.findall(r'<w:p\b[\s\S]*?</w:p>', body)
 
@@ -86,24 +92,24 @@ def parse_part2():
     for b in blocks:
         t = text_of(b)
         imgs = [rid2file[i] for i in re.findall(r'r:embed="([^"]+)"', b) if i in rid2file]
-        if re.match(r'^SPEAKING PART 2', t, re.I):
+        if re.match(r'^SPEAKING PART %d' % part, t, re.I):
             started = True
             continue
         if not started:
             continue
-        head = re.match(r'^(\d+)\.\s*Describe the picture(?:\s*\((\d+)\))?', t, re.I)
+        head = head_re.match(t)
         if head:
             if cur:
                 sets.append(cur)
-            cur = {'id': 'p2-%02d' % int(head.group(1)), 'no': int(head.group(1)),
-                   'bank': head.group(2) or '', 'img': '', 'tasks': []}
-            cur['tasks'].append({'k': 'describe', 'q': 'Describe the picture.'})
+            # đánh số lại theo thứ tự xuất hiện: file gốc có số trùng và nhảy cóc
+            cur = {'no': len(sets) + 1, 'label': head.group(1),
+                   'bank': head.group(2) or '', 'imgs': [], 'tasks': [{'k': 'describe', 'q': first_task}]}
+            cur['id'] = 'p%d-%02d' % (part, cur['no'])
             continue
         if cur is None:
             continue
-        if imgs and not cur['img']:
-            cur['img'] = imgs[0]
-        if t and not re.match(r'^\d+\.\s*Describe', t, re.I):
+        cur['imgs'] += imgs
+        if t and not head_re.match(t):
             for line in t.split('\n'):
                 line = line.strip()
                 if line and len(cur['tasks']) < 3:
@@ -113,18 +119,20 @@ def parse_part2():
     return sets
 
 
-def shrink_images(sets):
-    os.makedirs(MEDIA, exist_ok=True)
-    with zipfile.ZipFile(P2_DOC) as z:
+def shrink_images(doc, sets, part):
+    outdir = os.path.join(MEDIA, 'part%d' % part)
+    os.makedirs(outdir, exist_ok=True)
+    with zipfile.ZipFile(doc) as z:
         for s in sets:
-            if not s['img']:
-                continue
-            raw = z.read('word/media/' + s['img'])
-            im = Image.open(io.BytesIO(raw)).convert('RGB')
-            im.thumbnail((1100, 1100), Image.LANCZOS)
-            name = '%02d.jpg' % s['no']
-            im.save(os.path.join(MEDIA, name), 'JPEG', quality=72, optimize=True, progressive=True)
-            s['img'] = 'media/part2/' + name
+            names = []
+            for j, src in enumerate(s['imgs']):
+                raw = z.read('word/media/' + src)
+                im = Image.open(io.BytesIO(raw)).convert('RGB')
+                im.thumbnail((1100, 1100), Image.LANCZOS)
+                name = '%02d%s.jpg' % (s['no'], 'ab'[j] if len(s['imgs']) > 1 else '')
+                im.save(os.path.join(outdir, name), 'JPEG', quality=72, optimize=True, progressive=True)
+                names.append('media/part%d/%s' % (part, name))
+            s['imgs'] = names
 
 
 def write_js(path, varname, data, note):
@@ -157,10 +165,20 @@ if __name__ == '__main__':
     for x in p1[:2]:
         print('  -', x['id'], '|', x['group'][:28], '|', x['q'][:46], '| %d từ' % len(x['answer'].split()))
 
-    p2 = parse_part2()
-    shrink_images(p2)
-    write_js(os.path.join(DATA, 'part2.js'), 'APTIS_PART2', p2, 'Aptis Speaking Part 2')
-    total = sum(os.path.getsize(os.path.join(MEDIA, f)) for f in os.listdir(MEDIA)) / 1048576
-    print('Part 2: %d bộ, ảnh nén còn %.1f MB' % (len(p2), total))
-    for x in p2[:3]:
-        print('  -', x['id'], '|', x['img'], '|', ' // '.join(t['q'][:40] for t in x['tasks']))
+    for part, doc, head, first in (
+            (2, P2_DOC, HEAD_P2, 'Describe the picture.'),
+            (3, P3_DOC, HEAD_P3, 'Tell me what you see in the two pictures.')):
+        sets = parse_picture_part(doc, part, head, first)
+        shrink_images(doc, sets, part)
+        write_js(os.path.join(DATA, 'part%d.js' % part), 'APTIS_PART%d' % part, sets,
+                 'Aptis Speaking Part %d' % part)
+        d = os.path.join(MEDIA, 'part%d' % part)
+        mb = sum(os.path.getsize(os.path.join(d, f)) for f in os.listdir(d)) / 1048576
+        nimg = sum(len(s['imgs']) for s in sets)
+        print('Part %d: %d bộ, %d ảnh nén còn %.1f MB' % (part, len(sets), nimg, mb))
+        bad = [s['id'] for s in sets if len(s['tasks']) != 3 or not s['imgs']]
+        if bad:
+            print('  CAN XEM LAI:', ', '.join(bad))
+        for x in sets[:2]:
+            print('  -', x['id'], '|', ','.join(x['imgs']), '|',
+                  ' // '.join(t['q'][:38] for t in x['tasks']))

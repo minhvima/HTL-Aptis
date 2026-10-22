@@ -1,10 +1,12 @@
 /* Aptis Speaking Part 2 — sinh tự động bởi import-speaking.py, đừng sửa tay */
 window.APTIS_PART2 = [
  {
-  "id": "p2-01",
   "no": 1,
+  "label": "1",
   "bank": "",
-  "img": "media/part2/01.jpg",
+  "imgs": [
+   "media/part2/01.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -18,13 +20,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Please talk about the last time you ate with friends?"
    }
-  ]
+  ],
+  "id": "p2-01"
  },
  {
-  "id": "p2-02",
   "no": 2,
+  "label": "2",
   "bank": "",
-  "img": "media/part2/02.jpg",
+  "imgs": [
+   "media/part2/02.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -38,13 +43,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "How can people overcome the time of a long journey?"
    }
-  ]
+  ],
+  "id": "p2-02"
  },
  {
-  "id": "p2-03",
   "no": 3,
+  "label": "3",
   "bank": "7",
-  "img": "media/part2/03.jpg",
+  "imgs": [
+   "media/part2/03.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -58,13 +66,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Do you think machines will do all our hard work in the future? Why?"
    }
-  ]
+  ],
+  "id": "p2-03"
  },
  {
-  "id": "p2-04",
   "no": 4,
+  "label": "4",
   "bank": "8",
-  "img": "media/part2/04.jpg",
+  "imgs": [
+   "media/part2/04.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -78,13 +89,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Why are people scared of public speaking?"
    }
-  ]
+  ],
+  "id": "p2-04"
  },
  {
-  "id": "p2-05",
   "no": 5,
+  "label": "5",
   "bank": "13",
-  "img": "media/part2/05.jpg",
+  "imgs": [
+   "media/part2/05.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -98,13 +112,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "How can we increase the number of people using public transport?"
    }
-  ]
+  ],
+  "id": "p2-05"
  },
  {
-  "id": "p2-06",
   "no": 6,
+  "label": "6",
   "bank": "14",
-  "img": "media/part2/06.jpg",
+  "imgs": [
+   "media/part2/06.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -118,13 +135,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Do you think people from different countries laugh at different things?"
    }
-  ]
+  ],
+  "id": "p2-06"
  },
  {
-  "id": "p2-07",
   "no": 7,
+  "label": "7",
   "bank": "17",
-  "img": "media/part2/07.jpg",
+  "imgs": [
+   "media/part2/07.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -138,13 +158,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Is it common to live far from school in your country? Why?"
    }
-  ]
+  ],
+  "id": "p2-07"
  },
  {
-  "id": "p2-08",
   "no": 8,
+  "label": "8",
   "bank": "22",
-  "img": "media/part2/08.jpg",
+  "imgs": [
+   "media/part2/08.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -158,13 +181,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "How should parents spend time together with their children?"
    }
-  ]
+  ],
+  "id": "p2-08"
  },
  {
-  "id": "p2-09",
   "no": 9,
+  "label": "9",
   "bank": "23",
-  "img": "media/part2/09.jpg",
+  "imgs": [
+   "media/part2/09.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -178,13 +204,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "How important are animals in our lives?"
    }
-  ]
+  ],
+  "id": "p2-09"
  },
  {
-  "id": "p2-10",
   "no": 10,
+  "label": "10",
   "bank": "24",
-  "img": "media/part2/10.jpg",
+  "imgs": [
+   "media/part2/10.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -198,13 +227,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Why do many people like outdoor activities?"
    }
-  ]
+  ],
+  "id": "p2-10"
  },
  {
-  "id": "p2-11",
   "no": 11,
+  "label": "11",
   "bank": "25",
-  "img": "media/part2/11.jpg",
+  "imgs": [
+   "media/part2/11.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -218,13 +250,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Why do parents care about their children?"
    }
-  ]
+  ],
+  "id": "p2-11"
  },
  {
-  "id": "p2-12",
   "no": 12,
+  "label": "12",
   "bank": "27",
-  "img": "media/part2/12.jpg",
+  "imgs": [
+   "media/part2/12.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -238,13 +273,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Why do people need to watch the news?"
    }
-  ]
+  ],
+  "id": "p2-12"
  },
  {
-  "id": "p2-13",
   "no": 13,
+  "label": "13",
   "bank": "28",
-  "img": "media/part2/13.jpg",
+  "imgs": [
+   "media/part2/13.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -258,13 +296,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Why do many people hate crowded places?"
    }
-  ]
+  ],
+  "id": "p2-13"
  },
  {
-  "id": "p2-14",
   "no": 14,
+  "label": "14",
   "bank": "29",
-  "img": "media/part2/14.jpg",
+  "imgs": [
+   "media/part2/14.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -278,13 +319,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "What are the benefits of hanging out with other people?"
    }
-  ]
+  ],
+  "id": "p2-14"
  },
  {
-  "id": "p2-15",
   "no": 15,
+  "label": "15",
   "bank": "32",
-  "img": "media/part2/15.jpg",
+  "imgs": [
+   "media/part2/15.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -298,13 +342,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Why do people like to go to art exhibitions?"
    }
-  ]
+  ],
+  "id": "p2-15"
  },
  {
-  "id": "p2-16",
   "no": 16,
+  "label": "16",
   "bank": "34",
-  "img": "media/part2/16.jpg",
+  "imgs": [
+   "media/part2/16.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -318,13 +365,16 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Why do many people enjoy shopping with friends?"
    }
-  ]
+  ],
+  "id": "p2-16"
  },
  {
-  "id": "p2-17",
   "no": 17,
+  "label": "17",
   "bank": "35",
-  "img": "media/part2/17.jpg",
+  "imgs": [
+   "media/part2/17.jpg"
+  ],
   "tasks": [
    {
     "k": "describe",
@@ -338,6 +388,7 @@ window.APTIS_PART2 = [
     "k": "q2",
     "q": "Is it important to eat a good breakfast? Why?"
    }
-  ]
+  ],
+  "id": "p2-17"
  }
 ];

@@ -27,7 +27,11 @@ Hai nút **Speaking Part 1** và **Part 2 (tranh)** trong menu ⋮ mở sẵn b�
 
 63 mục từ vựng kèm IPA và nghĩa Việt trong tài liệu được nhập thẳng vào kho tra từ, nên bấm vào từ trong bài là ra nghĩa ngay, không cần mạng.
 
-**Part 2 — 17 bộ tranh**, mỗi bộ 3 nhiệm vụ 45 giây: tả tranh + 2 câu hỏi mở rộng. Chưa có bài mẫu, nên mỗi nhiệm vụ có ô soạn câu trả lời kèm khung gợi ý và bộ đếm *"n từ · khoảng x giây khi nói"*. Soạn xong bấm **Học thuộc phần này** là chuyển thành bài học như Part 1. Nội dung bạn soạn lưu trong trình duyệt và đi theo file sao lưu.
+**Part 2 — 17 bộ, mỗi bộ một tranh.** Ba nhiệm vụ 45 giây: tả tranh + 2 câu hỏi mở rộng.
+
+**Part 3 — 17 bộ, mỗi bộ hai tranh để so sánh.** Ba nhiệm vụ 45 giây: tả và so sánh hai tranh + 2 câu hỏi ý kiến. Khung gợi ý riêng cho dạng so sánh (*"Both pictures show… / The main difference is that…"*). Bấm vào tranh để xem cỡ lớn.
+
+Cả hai phần đều chưa có bài mẫu, nên mỗi nhiệm vụ có ô soạn câu trả lời kèm khung gợi ý và bộ đếm *"n từ · khoảng x giây khi nói"*. Soạn xong bấm **Học thuộc phần này** là chuyển thành bài học như Part 1. Nội dung bạn soạn lưu trong trình duyệt và đi theo file sao lưu.
 
 Khi học bài Part 1/2, tab Đọc lại có **đồng hồ đếm ngược 30 hoặc 45 giây**, tự dừng ghi âm khi hết giờ và chuyển đỏ ở 5 giây cuối.
 
@@ -46,8 +50,8 @@ Script đọc hai file trong `Input doc/Speaking/`, sinh lại `data/part1.js`, 
 | `index.html` | bản chạy được, gộp sẵn mọi thứ — chính là trang web ở trên, cũng là file gửi cho người khác |
 | `aptis-memorizer.html` | mã nguồn (nạp `glossary.js` riêng) — sửa ở đây |
 | `glossary.js` | từ điển tra nhanh: nghĩa tiếng Việt + phiên âm, thêm bao nhiêu tuỳ ý |
-| `data/part1.js`, `data/part2.js` | đề Speaking Part 1 & 2, sinh tự động từ file .docx |
-| `media/part2/01–17.jpg` | 17 tranh đề Part 2, đã nén |
+| `data/part1.js` … `part3.js` | đề Speaking Part 1, 2, 3 — sinh tự động từ file .docx |
+| `media/part2/`, `media/part3/` | 17 + 31 tranh đề, đã nén |
 | `import-speaking.py` | trích lại dữ liệu Speaking từ hai file .docx gốc |
 | `build-standalone.js` | `node build-standalone.js` để gộp mã nguồn + glossary + dữ liệu thành `index.html` |
 

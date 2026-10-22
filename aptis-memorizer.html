@@ -207,7 +207,12 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 .p2grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:14px}
 .p2card{display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);text-align:left}
 .p2card:hover{border-color:var(--accent)}
+.p2card .pics{display:grid;grid-template-columns:1fr;gap:2px}
+.p2card .pics.two{grid-template-columns:1fr 1fr}
 .p2card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.pics{display:grid;grid-template-columns:1fr;gap:8px}
+.pics.two{grid-template-columns:1fr 1fr}
+@media (max-width:720px){.pics.two{grid-template-columns:1fr}}
 .p2card .cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:7px 10px}
 .p2card .cap b{font-size:calc(14.5px * var(--zoom))}
 .p2card .cap span{font-size:calc(12.5px * var(--zoom));color:var(--fg-dim)}
@@ -264,6 +269,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
       <button class="btn" id="pasteBtn">Dán bài mới</button>
       <button class="btn" id="p1Btn">Speaking Part 1</button>
       <button class="btn" id="p2Btn">Part 2 (tranh)</button>
+      <button class="btn" id="p3Btn">Part 3 (2 tranh)</button>
       <span class="zoombox">
         <button class="btn ghost sm" id="zoomOut" title="Thu nhỏ chữ">A&minus;</button>
         <b id="zoomVal">100%</b>
@@ -286,6 +292,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 <script src="glossary.js"></script>
 <script src="data/part1.js"></script>
 <script src="data/part2.js"></script>
+<script src="data/part3.js"></script>
 <script>
 /* =======================================================================
    APTIS RECALL TRAINER
@@ -2350,6 +2357,8 @@ function showBackupText(host, data, afterDownload) {
    hoc thuoc giong Part 1.                                            */
 const P1 = window.APTIS_PART1 || [];
 const P2 = window.APTIS_PART2 || [];
+const P3 = window.APTIS_PART3 || [];
+const PICSETS = { p2: P2, p3: P3 };
 const P2KEY = 'p2answers';
 const P2ANS = load(P2KEY, {});
 const p2Save = () => save(P2KEY, P2ANS);
@@ -2379,16 +2388,17 @@ function openP1(item, useAlt) {
   S.browse = null;
   loadText(p1Text(item, useAlt), name, { kind: 'p1', limit: 30, src: item.id });
 }
+const partNo = set => (set.id || 'p2').charAt(1);
 function p2Text(set, task, answer) {
-  return task.q + '\n(Part 2 — tranh ' + set.no + ', 45 giây)\n------------------------\n' + chunkless(answer);
+  return task.q + '\n(Part ' + partNo(set) + ' — bộ tranh ' + set.no + ', 45 giây)\n------------------------\n' + chunkless(answer);
 }
 function openP2Task(set, ti) {
   const task = set.tasks[ti];
   const ans = ((P2ANS[set.id] || {})[task.k] || '').trim();
   if (!ans) { toast('Bạn chưa soạn câu trả lời cho phần này.'); return; }
   S.browse = null;
-  loadText(p2Text(set, task, ans), 'P2.' + set.no + '.' + (ti + 1) + ' ' + task.q.slice(0, 40),
-    { kind: 'p2', limit: 45, src: set.id + ':' + task.k });
+  loadText(p2Text(set, task, ans), 'P' + partNo(set) + '.' + set.no + '.' + (ti + 1) + ' ' + task.q.slice(0, 40),
+    { kind: 'p' + partNo(set), limit: 45, src: set.id + ':' + task.k });
 }
 
 /* ----- Thu vien Part 1 ----- */
@@ -2440,24 +2450,34 @@ function viewP1(v) {
   v.appendChild(box);
 }
 
-/* ----- Thu vien Part 2 ----- */
-function viewP2(v) {
+/* ----- Thu vien de co tranh: dung chung cho Part 2 va Part 3 ----- */
+const PIC_NOTE = {
+  p2: 'Mỗi bộ gồm 3 nhiệm vụ, mỗi nhiệm vụ 45 giây: tả một bức tranh, rồi hai câu hỏi mở rộng. Tài liệu chưa có bài mẫu nên bạn tự soạn câu trả lời; soạn xong là học thuộc được như Part 1.',
+  p3: 'Part 3 có hai bức tranh để so sánh. Ba nhiệm vụ, mỗi nhiệm vụ 45 giây: tả và so sánh hai tranh, rồi hai câu hỏi ý kiến. Bạn tự soạn câu trả lời rồi học thuộc.'
+};
+function viewP2(v, part) {
+  part = part || 'p2';
+  const data = PICSETS[part] || [];
   const c = el('div', 'card');
   const head = el('div', 'row');
-  head.appendChild(el('h2', null, 'Speaking Part 2 — 17 bộ tranh'));
+  head.appendChild(el('h2', null, 'Speaking Part ' + part.charAt(1) + ' — ' + data.length + ' bộ tranh'));
   const back = el('button', 'btn sm ghost', 'Đóng');
   back.onclick = () => { S.browse = null; S.p2Set = null; render(); };
   head.appendChild(back);
   c.appendChild(head);
 
   if (S.p2Set == null) {
-    c.appendChild(scopeNote('Mỗi bộ gồm 3 nhiệm vụ, mỗi nhiệm vụ 45 giây: tả tranh, rồi hai câu hỏi mở rộng. Tài liệu chưa có bài mẫu nên bạn tự soạn câu trả lời; soạn xong là học thuộc được như Part 1.'));
+    c.appendChild(scopeNote(PIC_NOTE[part]));
     v.appendChild(c);
     const grid = el('div', 'p2grid');
-    P2.forEach((s, i) => {
+    data.forEach((s, i) => {
       const card = el('button', 'p2card');
-      const im = el('img'); im.src = s.img; im.alt = 'Tranh ' + s.no; im.loading = 'lazy';
-      card.appendChild(im);
+      const pics = el('div', 'pics' + (s.imgs.length > 1 ? ' two' : ''));
+      s.imgs.forEach(src => {
+        const im = el('img'); im.src = src; im.alt = 'Tranh bộ ' + s.no; im.loading = 'lazy';
+        pics.appendChild(im);
+      });
+      card.appendChild(pics);
       const cap = el('div', 'cap');
       cap.appendChild(el('b', null, 'Bộ ' + s.no));
       const done = s.tasks.filter(t => ((P2ANS[s.id] || {})[t.k] || '').trim()).length;
@@ -2470,11 +2490,11 @@ function viewP2(v) {
     return;
   }
 
-  const s = P2[S.p2Set];
+  const s = data[S.p2Set];
   const nav = el('div', 'row');
   const bp = el('button', 'btn sm ghost', '← Bộ trước'); bp.disabled = S.p2Set === 0;
   bp.onclick = () => { S.p2Set--; render(); };
-  const bn = el('button', 'btn sm ghost', 'Bộ sau →'); bn.disabled = S.p2Set >= P2.length - 1;
+  const bn = el('button', 'btn sm ghost', 'Bộ sau →'); bn.disabled = S.p2Set >= data.length - 1;
   bn.onclick = () => { S.p2Set++; render(); };
   const ball = el('button', 'btn sm ghost', 'Tất cả bộ');
   ball.onclick = () => { S.p2Set = null; render(); };
@@ -2483,12 +2503,21 @@ function viewP2(v) {
   v.appendChild(c);
 
   const pic = el('div', 'card');
-  const im = el('img'); im.src = s.img; im.alt = 'Tranh bộ ' + s.no;
-  im.style.cssText = 'width:100%;max-height:52vh;object-fit:contain;border-radius:8px';
-  pic.appendChild(im);
+  const pics = el('div', 'pics' + (s.imgs.length > 1 ? ' two' : ''));
+  s.imgs.forEach(src => {
+    const im = el('img'); im.src = src; im.alt = 'Tranh bộ ' + s.no;
+    im.style.cssText = 'width:100%;max-height:52vh;object-fit:contain;border-radius:8px;cursor:zoom-in';
+    im.onclick = () => window.open(src, '_blank');
+    pics.appendChild(im);
+  });
+  pic.appendChild(pics);
   v.appendChild(pic);
 
-  const HINTS = {
+  const HINTS = part === 'p3' ? {
+    describe: 'Khung so sánh hai tranh: tả nhanh từng tranh (ai / ở đâu / đang làm gì), rồi nêu điểm giống và điểm khác. Mẫu: “Both pictures show… / The main difference is that…”.',
+    q1: 'Câu hỏi lựa chọn hoặc ý kiến: chọn một bên rõ ràng → hai lý do → một ví dụ của bản thân → câu kết.',
+    q2: 'Câu hỏi mở rộng: nêu quan điểm → giải thích → liên hệ thực tế ở Việt Nam → câu kết.'
+  } : {
     describe: 'Khung tả tranh: ai / ở đâu / đang làm gì / không khí ra sao / đoán về hoàn cảnh. Mở bằng “This picture shows…”, chốt bằng cảm nhận.',
     q1: 'Câu hỏi ý kiến hoặc trải nghiệm: trả lời thẳng → hai lý do → một ví dụ cụ thể → câu kết.',
     q2: 'Câu hỏi mở rộng: nêu quan điểm → giải thích → liên hệ thực tế ở Việt Nam → câu kết.'
@@ -2549,7 +2578,7 @@ function render() {
     v.appendChild(w);
   }
   if (S.browse === 'p1') { renderTabs(); viewP1(v); return; }
-  if (S.browse === 'p2') { renderTabs(); viewP2(v); return; }
+  if (S.browse === 'p2' || S.browse === 'p3') { renderTabs(); viewP2(v, S.browse); return; }
   if (!S.doc) { viewEmpty(v); return; }
   const fn = { read: viewRead, skeleton: viewSkeleton, map: viewMap, cloze: viewCloze, type: viewType, speak: viewSpeak, srs: viewSrs, stats: viewStats }[S.mode] || viewRead;
   fn(v);
@@ -2748,6 +2777,7 @@ $('#openBtn').onclick = () => { closeTools(); $('#fileInput').click(); };
 $('#pasteBtn').onclick = () => { closeTools(); openPaste(); };
 $('#p1Btn').onclick = () => { closeTools(); S.browse = 'p1'; render(); };
 $('#p2Btn').onclick = () => { closeTools(); S.browse = 'p2'; S.p2Set = null; render(); };
+$('#p3Btn').onclick = () => { closeTools(); S.browse = 'p3'; S.p2Set = null; render(); };
 $('#fileInput').onchange = e => { const f = e.target.files[0]; if (f) readFile(f); };
 $('#railBtn').onclick = () => $('#rail').classList.toggle('open');
 function applyWidthBtn() {

@@ -9,7 +9,8 @@ const dir = __dirname;
 let out = fs.readFileSync(path.join(dir, 'aptis-memorizer.html'), 'utf8');
 
 // nhúng glossary và dữ liệu Speaking vào thẳng file
-[['glossary.js', 'glossary.js'], ['data/part1.js', 'data/part1.js'], ['data/part2.js', 'data/part2.js']]
+[['glossary.js', 'glossary.js'], ['data/part1.js', 'data/part1.js'],
+ ['data/part2.js', 'data/part2.js'], ['data/part3.js', 'data/part3.js']]
   .forEach(([tagPath, file]) => {
     const tag = '<script src="' + tagPath + '"></script>';
     if (!out.includes(tag)) {
