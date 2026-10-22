@@ -3786,14 +3786,25 @@ function viewStats(v) {
   tok.value = GH.tokGet();
   tok.style.cssText = 'flex:1;min-width:210px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);font-size:calc(14px * var(--zoom))';
   const bTok = el('button', 'btn sm primary', 'Lưu token');
-  bTok.onclick = () => { GH.tokSet(tok.value.trim()); toast(tok.value.trim() ? 'Đã lưu token' : 'Đã xoá token'); render(); };
+  bTok.onclick = async () => {
+    const v = tok.value.trim();
+    GH.tokSet(v);
+    if (!v) { S.prefs.ghUser = ''; persist(); toast('Đã xoá token'); render(); return; }
+    try {
+      const who = await GH.who();
+      GH.idSet('');                 // token moi -> tim lai Gist cua chinh tai khoan do
+      toast('Đã lưu token của tài khoản @' + who);
+    } catch (e) { toast('Token không dùng được: ' + e.message); }
+    render();
+  };
   syRow.appendChild(tok); syRow.appendChild(bTok);
   sy.appendChild(syRow);
 
   const syStat = el('p', 'hint'); syStat.style.marginTop = '8px';
   if (GH.tokGet()) {
-    syStat.textContent = (S.prefs.lastSync ? 'Lần đồng bộ gần nhất: ' + new Date(S.prefs.lastSync).toLocaleString('vi-VN') : 'Chưa đồng bộ lần nào.')
-      + (GH.idGet() ? ' · Gist: ' + GH.idGet().slice(0, 8) + '…' : ' · chưa có Gist, lần gửi đầu sẽ tự tạo');
+    syStat.textContent = (S.prefs.ghUser ? 'Tài khoản GitHub: @' + S.prefs.ghUser + ' · ' : '')
+      + (S.prefs.lastSync ? 'đồng bộ gần nhất ' + new Date(S.prefs.lastSync).toLocaleString('vi-VN') : 'chưa đồng bộ lần nào')
+      + (GH.idGet() ? ' · Gist ' + GH.idGet().slice(0, 8) + '…' : ' · chưa có Gist, lần gửi đầu sẽ tự tạo');
   } else {
     syStat.innerHTML = 'Cách lấy token: vào <b>github.com/settings/tokens</b> → Generate new token (classic) → chỉ tích ô <b>gist</b> → copy chuỗi bắt đầu bằng ghp_ và dán vào ô trên. Làm y như vậy ở máy kia.';
   }
@@ -4220,12 +4231,20 @@ const GH = {
     }
     return r.json();
   },
+  async who() {                       // token cua tai khoan nao -> de khong dong bo nham
+    const u = await this.api('/user');
+    S.prefs.ghUser = u.login || '';
+    persist();
+    return S.prefs.ghUser;
+  },
   async findGist(create) {
     const id = this.idGet();
     if (id) return id;
     const list = await this.api('/gists?per_page=100');
-    const hit = (list || []).find(g => g.description === GIST_DESC);
-    if (hit) { this.idSet(hit.id); return hit.id; }
+    // chi thay Gist cua chinh tai khoan giu token, nen moi nguoi mot kho rieng
+    const hits = (list || []).filter(g => g.description === GIST_DESC);
+    hits.sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
+    if (hits.length) { this.idSet(hits[0].id); return hits[0].id; }
     return create ? '' : null;
   },
   async pull() {

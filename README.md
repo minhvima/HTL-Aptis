@@ -258,6 +258,10 @@ Có ô **Tự tải về và gộp mỗi khi mở công cụ** nếu muốn đ�
 
 Token chỉ nằm trong trình duyệt máy đó, chỉ gửi tới `api.github.com`, và **không** nằm trong file sao lưu. Gist ở chế độ riêng tư nhưng ai có đường dẫn vẫn xem được, nên đừng đưa đường dẫn Gist cho người khác.
 
+**Người khác dùng chung công cụ thì sao?** Mỗi người tạo token trên tài khoản GitHub của chính mình, nên Gist nằm trong tài khoản của họ và hoàn toàn tách biệt. Công cụ tìm Gist bằng cách liệt kê gist *của chính tài khoản giữ token*, không có cách nào chạm tới kho của người khác. Ô trạng thái hiện rõ **@tên tài khoản** đang đồng bộ để bạn biết mình đang dùng token nào.
+
+Chỉ có một trường hợp đụng nhau: **hai người dùng chung một token**. Khi đó cả hai ghi vào cùng một Gist và dữ liệu sẽ bị trộn lẫn. Đừng đưa token cho ai.
+
 ## Chia sẻ cho người khác
 
 **Cách 1 — gửi link (tốt nhất).** https://minhvima.github.io/HTL-Aptis/ — ai có link là dùng được, luôn là bản mới nhất. Vì là địa chỉ `https://` nên Chrome **nhớ quyền micro vĩnh viễn** và Whisper chạy trong Web Worker ổn định, tốt hơn hẳn mở file bằng `file://`.
