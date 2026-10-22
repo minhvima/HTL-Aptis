@@ -1950,11 +1950,49 @@ function viewSpeak(v) {
     }
     out.appendChild(renderDiff(d));
     if (S.spScope === 'all') S.stats.bestWhole = Math.max(S.stats.bestWhole || 0, Math.round(d.acc * 100));
+
+    /* Doi chieu bang mo hinh khong doan, tren CHINH ban ghi vua roi */
+    if (lastBlob && ASR.engine() !== 'strict') {
+      const row = el('div', 'row'); row.style.marginTop = '10px';
+      const b = el('button', 'btn sm', 'Chấm lại nghiêm khắc (không đoán)');
+      b.title = 'Dùng wav2vec2 trên chính bản ghi này — không đọc lại';
+      const st = el('span', 'hint');
+      row.appendChild(b); row.appendChild(st);
+      out.appendChild(row);
+      const strictBox = el('div');
+      out.appendChild(strictBox);
+      b.onclick = async () => {
+        b.disabled = true;
+        try {
+          const t2 = await transcribeWhisper(lastBlob, s => { st.textContent = s; }, true);
+          st.textContent = '';
+          strictBox.innerHTML = '';
+          const d2 = diffWords(cur.t, t2);
+          const p1 = Math.round(d.acc * 100), p2 = Math.round(d2.acc * 100);
+          const sc2 = el('div', 'score');
+          sc2.appendChild(el('b', null, p2 + '%'));
+          sc2.appendChild(el('span', 'hint', 'khi máy không được đoán theo ngữ cảnh'));
+          strictBox.appendChild(sc2);
+          strictBox.appendChild(el('p', 'hint', 'Máy nghe được: “' + (t2 || '(không nghe được gì)') + '”'));
+          strictBox.appendChild(renderDiff(d2));
+          const gap = p1 - p2;
+          const note2 = el('p', 'hint sci');
+          note2.textContent = gap <= 5
+            ? 'Chênh ' + gap + ' điểm — phát âm của bạn rõ, điểm ở trên là thật.'
+            : 'Chênh ' + gap + ' điểm. Khoảng này là phần mô hình kia đoán giúp bạn; những từ bị gạch đỏ ở đây mới là chỗ phát âm cần sửa.';
+          strictBox.appendChild(note2);
+        } catch (e) {
+          st.textContent = 'Không chấm lại được: ' + e.message;
+        }
+        b.disabled = false;
+      };
+    }
+
     out.appendChild(gradeBar(cur.ids, () => { S.spI++; render(); }));
     persist();
   };
 
-  let cancelled = false, aborted = false, phase = 'idle';
+  let cancelled = false, aborted = false, phase = 'idle', lastBlob = null;
   bStop.onclick = () => {
     if (ASR.engine() === 'browser') { SR.stop(); return; }
     bStop.hidden = true; bCancel.hidden = true;
@@ -2009,6 +2047,7 @@ function viewSpeak(v) {
       return;
     }
     if (cancelled) { idle(); return; }
+    lastBlob = blob;                       // giu lai de cham lai nghiem khac tren cung ban ghi
     if (ASR.lastUrl) URL.revokeObjectURL(ASR.lastUrl);
     ASR.lastUrl = URL.createObjectURL(blob);
     const au = document.createElement('audio');
