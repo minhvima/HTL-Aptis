@@ -1628,7 +1628,7 @@ const WHISPER_WORKER_SRC = [
   "          self.postMessage({ type: 'status', text: 'Đang tải mô hình: ' + Math.round(p.progress) + '%' }); } });",
   "    }",
   "    self.postMessage({ type: 'status', text: 'Đang nhận dạng trên máy…' });",
-  "    const r = await pipe(m.audio, { language: 'english', task: 'transcribe', chunk_length_s: 30, stride_length_s: 5 });",
+  "    const r = await pipe(m.audio, m.opts || {});",
   "    self.postMessage({ type: 'done', text: (r && r.text) || '' });",
   "  } catch (err) { self.postMessage({ type: 'error', text: String((err && err.message) || err) }); }",
   "};"
@@ -1647,7 +1647,7 @@ function whisperWorker() {
 function whisperKill() {
   if (waWorker) { try { waWorker.terminate(); } catch (e) {} waWorker = null; }
 }
-function runInWorker(w, audio, model, onStatus) {
+function runInWorker(w, audio, model, onStatus, opts) {
   return new Promise((res, rej) => {
     const cleanup = () => { w.removeEventListener('message', onMsg); w.removeEventListener('error', onErr); };
     const onMsg = e => {
@@ -1659,7 +1659,7 @@ function runInWorker(w, audio, model, onStatus) {
     };
     const onErr = ev => { cleanup(); rej(new Error('WORKER_FAIL: ' + ((ev && ev.message) || 'không khởi động được worker'))); };
     w.addEventListener('message', onMsg); w.addEventListener('error', onErr);
-    w.postMessage({ model, audio });   // khong transfer buffer de con dung lai khi phai chay o luong chinh
+    w.postMessage({ model, audio, opts });   // khong transfer buffer de con dung lai khi phai chay o luong chinh
   });
 }
 
@@ -1705,14 +1705,15 @@ async function fillMeanings(list) {
   } catch (e) { toast('Lỗi tra từ: ' + e.message); }
 }
 
-let waPipe = null, waLoading = null;
-async function whisperPipe(onStatus) {
-  if (waPipe) return waPipe;
+let waPipe = null, waLoading = null, waPipeName = '';
+async function whisperPipe(onStatus, wanted) {
+  const name = wanted || S.prefs.whisperModel || 'Xenova/whisper-base.en';
+  if (waPipe && waPipeName === name) return waPipe;
+  if (waPipeName !== name) { waPipe = null; waLoading = null; waPipeName = name; }
   if (!waLoading) waLoading = (async () => {
-    onStatus && onStatus('Đang tải thư viện Whisper…');
+    onStatus && onStatus('Đang tải thư viện nhận dạng…');
     const mod = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
     mod.env.allowLocalModels = false;
-    const name = S.prefs.whisperModel || 'Xenova/whisper-base.en';
     onStatus && onStatus('Đang tải mô hình ' + name.split('/')[1] + ' (chỉ lần đầu)…');
     waPipe = await mod.pipeline('automatic-speech-recognition', name, {
       quantized: true,
@@ -1735,17 +1736,23 @@ async function blobToMono16k(blob) {
   ac.close();
   return out.getChannelData(0);
 }
-async function transcribeWhisper(blob, onStatus) {
+/* strict = wav2vec2 CTC: giai ma tung khung am thanh, KHONG co mo hinh
+   ngon ngu doan tu ngu canh. Phat am sai chu nao se ra sai chu do.     */
+const WAV2VEC = 'Xenova/wav2vec2-base-960h';
+const WHISPER_OPTS = { language: 'english', task: 'transcribe', chunk_length_s: 30, stride_length_s: 5 };
+
+async function transcribeWhisper(blob, onStatus, strict) {
   onStatus && onStatus('Đang chuẩn bị âm thanh…');
   const audio = await blobToMono16k(blob);
   const secs = Math.round(audio.length / 16000);
-  const model = S.prefs.whisperModel || 'Xenova/whisper-base.en';
+  const model = strict ? WAV2VEC : (S.prefs.whisperModel || 'Xenova/whisper-base.en');
+  const opts = strict ? {} : WHISPER_OPTS;
   const tag = ' (' + secs + ' giây ghi âm)';
 
   const w = whisperWorker();
   if (w) {
     try {
-      return await runInWorker(w, audio, model, s => onStatus && onStatus(s + tag));
+      return await runInWorker(w, audio, model, s => onStatus && onStatus(s + tag), opts);
     } catch (e) {
       if (!/WORKER_FAIL/.test(e.message)) throw e;   // loi that su cua mo hinh -> bao len
       waWorkerBad = true; whisperKill();              // khong tao duoc worker -> chay o luong chinh
@@ -1753,17 +1760,17 @@ async function transcribeWhisper(blob, onStatus) {
   }
   onStatus && onStatus('Đang nhận dạng trên máy' + tag + ' — trang có thể đứng vài giây, đừng tắt.');
   await new Promise(r => setTimeout(r, 60));          // cho giao dien ve xong dong trang thai
-  const pipe = await whisperPipe(onStatus);
-  const r = await pipe(audio, { language: 'english', task: 'transcribe', chunk_length_s: 30, stride_length_s: 5 });
+  const pipe = await whisperPipe(onStatus, model);
+  const r = await pipe(audio, opts);
   return String((r && r.text) || '').trim();
 }
 
 /* ----- MODE: Doc lai bang mic ----- */
 function asrPanel(host) {
-  const names = { browser: 'Trình duyệt (miễn phí)', openai: 'OpenAI API', whisper: 'Whisper trên máy' };
+  const names = { browser: 'Trình duyệt (miễn phí)', openai: 'OpenAI API', whisper: 'Whisper trên máy', strict: 'Nghiêm khắc (không đoán)' };
   const row = el('div', 'row'); row.style.marginTop = '10px';
   row.appendChild(el('span', 'hint', 'Bộ nhận dạng:'));
-  ['browser', 'openai', 'whisper'].forEach(k => {
+  ['browser', 'openai', 'whisper', 'strict'].forEach(k => {
     const b = el('button', 'btn sm', names[k]);
     b.setAttribute('aria-pressed', String(ASR.engine() === k));
     b.onclick = () => { S.prefs.asr = k; persist(); render(); };
@@ -1805,6 +1812,11 @@ function asrPanel(host) {
     wrap.appendChild(sel);
     wrap.appendChild(el('p', 'hint', 'Chạy hoàn toàn trên máy bạn, không tốn tiền, không gửi tiếng nói đi đâu. Lần đầu cần tải mô hình (giữ lại trong cache trình duyệt), sau đó dùng được cả khi mất mạng.'));
     wrap.appendChild(el('p', 'hint sci', 'Tốc độ phụ thuộc CPU: khoảng 10–20 giây cho mỗi 30 giây ghi âm với base.en, chậm gấp 2–3 lần với small.en. Khi đọc cả bài (hơn một phút), nên dùng OpenAI API cho nhanh. Trong lúc nhận dạng có nút “Dừng nhận dạng” nếu bạn thấy lâu quá.'));
+    host.appendChild(wrap);
+  } else if (eng === 'strict') {
+    const wrap = el('div'); wrap.style.marginTop = '10px';
+    wrap.appendChild(el('p', 'hint', 'Dùng wav2vec2 — mô hình CTC giải mã từng khung âm thanh, KHÔNG có mô hình ngôn ngữ đoán từ theo ngữ cảnh. Bạn phát âm sai chữ nào thì nó ghi ra sai chữ đó, không “sửa hộ”. Chạy trên máy bạn, miễn phí, lần đầu tải khoảng 95MB.'));
+    wrap.appendChild(el('p', 'hint sci', 'Đây là cách duy nhất chắc chắn máy không đoán ý bạn. Đổi lại: không có dấu câu và chữ hoa, và với giọng chuẩn thì điểm thường thấp hơn các chế độ kia vài phần trăm — đó là phần phát âm thật của bạn chứ không phải lỗi chấm.'));
     host.appendChild(wrap);
   } else {
     host.appendChild(el('p', 'hint', 'Dùng sẵn bộ nhận dạng của Chrome/Edge: nhanh và miễn phí, nhưng hay nghe nhầm với câu dài hoặc giọng không phải bản ngữ. Nếu điểm thấp một cách vô lý, hãy đổi sang OpenAI API hoặc Whisper trên máy.'));
@@ -2007,14 +2019,14 @@ function viewSpeak(v) {
     bRec.hidden = false; bStop.hidden = true;
     bRec.disabled = true; bRec.textContent = 'Đang chấm…';
     led.classList.remove('live'); led.lastChild.textContent = 'đang xử lý';
-    if (eng === 'whisper') { bCancel.hidden = false; bCancel.textContent = 'Dừng nhận dạng'; }
+    if (eng === 'whisper' || eng === 'strict') { bCancel.hidden = false; bCancel.textContent = 'Dừng nhận dạng'; }
     let note = eng === 'openai' ? 'Đang gửi bản ghi tới OpenAI…' : 'Đang chuẩn bị…';
     const t0 = Date.now();
     const tick = setInterval(() => { live.textContent = note + '  ' + Math.round((Date.now() - t0) / 1000) + 's'; }, 500);
     try {
       let txt, conf = null;
       if (eng === 'openai') { const o = await transcribeOpenAI(blob); txt = o.text; conf = o.conf; }
-      else txt = await transcribeWhisper(blob, s => { note = s; });
+      else txt = await transcribeWhisper(blob, s => { note = s; }, eng === 'strict');
       if (aborted) return;
       phase = 'idle'; idle(); bCancel.textContent = 'Huỷ'; showResult(txt, conf);
     } catch (e) {
