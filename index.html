@@ -3776,6 +3776,57 @@ function viewStats(v) {
   const gout = el('div'); gout.id = 'glossOut'; vb.appendChild(gout);
   v.appendChild(vb);
 
+  /* --- dong bo giua cac may --- */
+  const sy = el('div', 'card');
+  sy.appendChild(el('h2', null, 'Đồng bộ giữa máy tính và điện thoại'));
+  sy.appendChild(el('p', 'hint', 'Chrome không đồng bộ dữ liệu website giữa các thiết bị. Công cụ dùng một Gist riêng tư trên GitHub làm nơi chứa: máy nào cũng tải về, gộp vào dữ liệu đang có, rồi gửi lên. Không ghi đè — bài và tiến độ của cả hai máy đều được giữ.'));
+  const syRow = el('div', 'row'); syRow.style.marginTop = '10px';
+  const tok = el('input');
+  tok.type = 'password'; tok.placeholder = 'GitHub token (quyền gist)';
+  tok.value = GH.tokGet();
+  tok.style.cssText = 'flex:1;min-width:210px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);font-size:calc(14px * var(--zoom))';
+  const bTok = el('button', 'btn sm primary', 'Lưu token');
+  bTok.onclick = () => { GH.tokSet(tok.value.trim()); toast(tok.value.trim() ? 'Đã lưu token' : 'Đã xoá token'); render(); };
+  syRow.appendChild(tok); syRow.appendChild(bTok);
+  sy.appendChild(syRow);
+
+  const syStat = el('p', 'hint'); syStat.style.marginTop = '8px';
+  if (GH.tokGet()) {
+    syStat.textContent = (S.prefs.lastSync ? 'Lần đồng bộ gần nhất: ' + new Date(S.prefs.lastSync).toLocaleString('vi-VN') : 'Chưa đồng bộ lần nào.')
+      + (GH.idGet() ? ' · Gist: ' + GH.idGet().slice(0, 8) + '…' : ' · chưa có Gist, lần gửi đầu sẽ tự tạo');
+  } else {
+    syStat.innerHTML = 'Cách lấy token: vào <b>github.com/settings/tokens</b> → Generate new token (classic) → chỉ tích ô <b>gist</b> → copy chuỗi bắt đầu bằng ghp_ và dán vào ô trên. Làm y như vậy ở máy kia.';
+  }
+  sy.appendChild(syStat);
+
+  if (GH.tokGet()) {
+    const r2 = el('div', 'row'); r2.style.marginTop = '10px';
+    const live = el('span', 'hint');
+    const mk = (label, dir, cls) => {
+      const b = el('button', cls, label);
+      b.onclick = async () => {
+        [...r2.querySelectorAll('button')].forEach(x => { x.disabled = true; });
+        await syncNow(dir, s => { live.textContent = s; });
+        [...r2.querySelectorAll('button')].forEach(x => { x.disabled = false; });
+      };
+      r2.appendChild(b);
+    };
+    mk('Đồng bộ (tải về rồi gửi lên)', 'both', 'btn primary');
+    mk('Chỉ gửi lên', 'push', 'btn ghost');
+    mk('Chỉ tải về', 'pull', 'btn ghost');
+    r2.appendChild(live);
+    sy.appendChild(r2);
+
+    const auto = el('label', 'sw'); auto.style.marginTop = '10px';
+    const cb = el('input'); cb.type = 'checkbox'; cb.checked = !!S.prefs.autoSync;
+    cb.onchange = () => { S.prefs.autoSync = cb.checked; persist(); };
+    auto.appendChild(cb);
+    auto.appendChild(el('span', null, 'Tự tải về và gộp mỗi khi mở công cụ'));
+    sy.appendChild(auto);
+    sy.appendChild(el('p', 'hint sci', 'Token chỉ nằm trong trình duyệt máy này, chỉ gửi tới api.github.com, và không nằm trong file sao lưu. Gist để chế độ riêng tư nhưng ai có đường dẫn vẫn xem được, nên đừng dán đường dẫn Gist cho người khác.'));
+  }
+  v.appendChild(sy);
+
   /* --- sao luu / khoi phuc --- */
   const bk = el('div', 'card');
   bk.appendChild(el('h2', null, 'Sao lưu & khôi phục'));
@@ -4142,6 +4193,86 @@ function viewP2(v, part) {
   });
 }
 
+/* ---------------- 9c. DONG BO QUA GITHUB GIST ----------------
+   Chrome khong dong bo localStorage giua cac may. Dung mot Gist rieng tu
+   lam noi chua ban sao luu: may nao cung tai ve, gop vao, roi gui len.  */
+const GIST_DESC = 'Memorization support - Aptis — dữ liệu đồng bộ';
+const GIST_FILE = 'aptis-recall-backup.json';
+const GH = {
+  tokGet() { try { return localStorage.getItem('aptis-recall:ghtoken') || ''; } catch (e) { return ''; } },
+  tokSet(v) { try { v ? localStorage.setItem('aptis-recall:ghtoken', v) : localStorage.removeItem('aptis-recall:ghtoken'); } catch (e) {} },
+  idGet() { try { return localStorage.getItem('aptis-recall:gistid') || ''; } catch (e) { return ''; } },
+  idSet(v) { try { localStorage.setItem('aptis-recall:gistid', v); } catch (e) {} },
+  async api(path, opts) {
+    if (!this.tokGet()) throw new Error('Chưa nhập token GitHub.');
+    const r = await fetch('https://api.github.com' + path, Object.assign({
+      headers: {
+        Authorization: 'Bearer ' + this.tokGet(),
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      }
+    }, opts || {}));
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      if (r.status === 401) throw new Error('Token không hợp lệ hoặc đã bị thu hồi.');
+      if (r.status === 403) throw new Error('Token thiếu quyền “gist”, hoặc gọi quá nhiều lần.');
+      throw new Error('GitHub trả lỗi ' + r.status + ': ' + t.slice(0, 120));
+    }
+    return r.json();
+  },
+  async findGist(create) {
+    const id = this.idGet();
+    if (id) return id;
+    const list = await this.api('/gists?per_page=100');
+    const hit = (list || []).find(g => g.description === GIST_DESC);
+    if (hit) { this.idSet(hit.id); return hit.id; }
+    return create ? '' : null;
+  },
+  async pull() {
+    const id = await this.findGist(false);
+    if (!id) return null;
+    const g = await this.api('/gists/' + id);
+    const f = (g.files || {})[GIST_FILE];
+    if (!f) return null;
+    let content = f.content;
+    if (f.truncated && f.raw_url) content = await (await fetch(f.raw_url)).text();
+    return { content, at: g.updated_at };
+  },
+  async push() {
+    const body = { description: GIST_DESC, public: false, files: {} };
+    body.files[GIST_FILE] = { content: exportAll() };
+    const id = await this.findGist(true);
+    const g = id
+      ? await this.api('/gists/' + id, { method: 'PATCH', body: JSON.stringify(body) })
+      : await this.api('/gists', { method: 'POST', body: JSON.stringify(body) });
+    this.idSet(g.id);
+    return g.updated_at;
+  }
+};
+
+async function syncNow(dir, say) {
+  const t = s => { if (say) say(s); };
+  try {
+    if (dir !== 'push') {
+      t('Đang tải dữ liệu từ GitHub…');
+      const got = await GH.pull();
+      if (got && got.content) { importAll(got.content); t('Đã gộp dữ liệu tải về.'); }
+      else t('Trên GitHub chưa có dữ liệu — sẽ tạo mới.');
+    }
+    if (dir !== 'pull') {
+      t('Đang gửi lên GitHub…');
+      await GH.push();
+    }
+    S.prefs.lastSync = Date.now();
+    persist();
+    t('Xong lúc ' + new Date().toLocaleTimeString('vi-VN') + '.');
+    toast('Đồng bộ xong');
+    render();
+  } catch (e) {
+    t('Lỗi: ' + e.message);
+  }
+}
+
 /* ---------------- 10. APP ---------------- */
 function render() {
   if (S.mode !== 'speak' && ASR.stream) ASR.release();   // roi tab ghi am thi tra micro lai
@@ -4452,6 +4583,9 @@ $('#zoomOut').onclick = () => { S.prefs.zoom = clamp((S.prefs.zoom || 1) - 0.1, 
 applyZoom();
 
 TTS.init();
+if (S.prefs.autoSync && GH.tokGet()) {           // tu tai ve va gop khi mo cong cu
+  setTimeout(() => syncNow('pull', s => { if (/Lỗi/.test(s)) toast(s); }), 800);
+}
 const lastId = load('last', null);
 const lastEntry = typeof lastId === 'string' ? libList().find(x => x.id === lastId) : (lastId && lastId.raw ? lastId : null);
 if (lastEntry && lastEntry.raw) loadText(lastEntry.raw, lastEntry.name); else render();

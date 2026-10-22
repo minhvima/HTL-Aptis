@@ -240,6 +240,24 @@ Bấm vào một từ → gõ nghĩa tiếng Việt → Enter (lưu riêng trong
 
 Cụm nhiều từ sẽ tự được gạch chân trong bài. Nếu máy có mạng, từ chưa có trong glossary vẫn tra được phiên âm + định nghĩa tiếng Anh tự động (chỉ ở bản chạy trên máy).
 
+## Đồng bộ giữa máy tính và điện thoại
+
+Chrome đồng bộ bookmark và mật khẩu, **nhưng không đồng bộ dữ liệu website** — mỗi thiết bị có kho `localStorage` riêng, đó là quy định bảo mật của trình duyệt, không bật được.
+
+Công cụ dùng một **Gist riêng tư trên GitHub** làm nơi chứa bản sao lưu. Thiết lập một lần cho mỗi máy:
+
+1. Vào **github.com/settings/tokens** → *Generate new token (classic)* → chỉ tích ô **gist** → tạo và copy chuỗi `ghp_…`
+2. Mở tab **Tiến độ → Đồng bộ giữa máy tính và điện thoại**, dán token, bấm **Lưu token**
+3. Bấm **Đồng bộ (tải về rồi gửi lên)**
+
+Lần đầu ở máy thứ nhất sẽ tự tạo Gist; máy thứ hai dán cùng token là tự tìm thấy Gist đó, không cần copy id.
+
+Cơ chế là **gộp, không ghi đè**: tải về → trộn vào dữ liệu đang có (bài nào chưa có thì thêm, tiến độ lấy bản có số lần ôn cao hơn, từ vựng hợp nhất) → gửi lên bản đã gộp. Nên học ở máy nào trước cũng được, miễn là bấm đồng bộ ở cả hai.
+
+Có ô **Tự tải về và gộp mỗi khi mở công cụ** nếu muốn đỡ phải nhớ.
+
+Token chỉ nằm trong trình duyệt máy đó, chỉ gửi tới `api.github.com`, và **không** nằm trong file sao lưu. Gist ở chế độ riêng tư nhưng ai có đường dẫn vẫn xem được, nên đừng đưa đường dẫn Gist cho người khác.
+
 ## Chia sẻ cho người khác
 
 **Cách 1 — gửi link (tốt nhất).** https://minhvima.github.io/HTL-Aptis/ — ai có link là dùng được, luôn là bản mới nhất. Vì là địa chỉ `https://` nên Chrome **nhớ quyền micro vĩnh viễn** và Whisper chạy trong Web Worker ổn định, tốt hơn hẳn mở file bằng `file://`.
