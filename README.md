@@ -19,6 +19,26 @@ Một trang web tĩnh, không máy chủ, không tài khoản: mọi bài học,
 | Đọc lại | chấm phát âm bằng micro: trình duyệt / OpenAI API / Whisper chạy trên máy |
 | Ôn tập | giãn cách 1′ → 6′ → 20′ rồi 1 → 3 → 7 → 16 → 35 ngày |
 
+### Speaking Part 1 & Part 2
+
+Hai nút **Speaking Part 1** và **Part 2 (tranh)** trong menu ⋮ mở sẵn bộ đề:
+
+**Part 1 — 21 câu hỏi**, chia 7 nhóm chủ đề, mỗi câu có mẫu trả lời chuẩn B2 theo công thức **A.R.E.C** (Answer → Reason → Example → Conclusion) dài 37–52 từ, vừa 20–25 giây. Bấm một câu là nó nạp thành bài học bình thường, dùng được cả 8 tab: Đọc & Nghe, Sơ đồ, Khung ý, Xoá dần, Gõ lại, Đọc lại, Ôn tập. Câu nào có hai phiên bản thì có thêm nút **bản 2** (cách diễn đạt đơn giản hơn).
+
+63 mục từ vựng kèm IPA và nghĩa Việt trong tài liệu được nhập thẳng vào kho tra từ, nên bấm vào từ trong bài là ra nghĩa ngay, không cần mạng.
+
+**Part 2 — 17 bộ tranh**, mỗi bộ 3 nhiệm vụ 45 giây: tả tranh + 2 câu hỏi mở rộng. Chưa có bài mẫu, nên mỗi nhiệm vụ có ô soạn câu trả lời kèm khung gợi ý và bộ đếm *"n từ · khoảng x giây khi nói"*. Soạn xong bấm **Học thuộc phần này** là chuyển thành bài học như Part 1. Nội dung bạn soạn lưu trong trình duyệt và đi theo file sao lưu.
+
+Khi học bài Part 1/2, tab Đọc lại có **đồng hồ đếm ngược 30 hoặc 45 giây**, tự dừng ghi âm khi hết giờ và chuyển đỏ ở 5 giây cuối.
+
+### Cập nhật dữ liệu Speaking từ file .docx
+
+```bash
+python import-speaking.py
+```
+
+Script đọc hai file trong `Input doc/Speaking/`, sinh lại `data/part1.js`, `data/part2.js` và nén ảnh vào `media/part2/`. Chạy lại mỗi khi bạn sửa file gốc, rồi `node build-standalone.js` và commit.
+
 ### Các file trong repo
 
 | File | Vai trò |
@@ -26,7 +46,10 @@ Một trang web tĩnh, không máy chủ, không tài khoản: mọi bài học,
 | `index.html` | bản chạy được, gộp sẵn mọi thứ — chính là trang web ở trên, cũng là file gửi cho người khác |
 | `aptis-memorizer.html` | mã nguồn (nạp `glossary.js` riêng) — sửa ở đây |
 | `glossary.js` | từ điển tra nhanh: nghĩa tiếng Việt + phiên âm, thêm bao nhiêu tuỳ ý |
-| `build-standalone.js` | `node build-standalone.js` để gộp hai file trên thành `index.html` |
+| `data/part1.js`, `data/part2.js` | đề Speaking Part 1 & 2, sinh tự động từ file .docx |
+| `media/part2/01–17.jpg` | 17 tranh đề Part 2, đã nén |
+| `import-speaking.py` | trích lại dữ liệu Speaking từ hai file .docx gốc |
+| `build-standalone.js` | `node build-standalone.js` để gộp mã nguồn + glossary + dữ liệu thành `index.html` |
 
 Repo không chứa bài học nào. Bạn tự mở file `.txt` của mình, hoặc dán nội dung vào ô ở màn hình đầu.
 
