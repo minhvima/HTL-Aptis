@@ -416,4 +416,4 @@ window.APTIS_PART2 = [
   ]
  }
 ];
-window.APTIS_PIC_VER = '202610241027';
+window.APTIS_PIC_VER = '202610241031';

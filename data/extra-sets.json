@@ -10,5 +10,17 @@
    ]
   }
  ],
- "part3": []
+ "part3": [
+  {
+   "srcs": [
+    "media/src/part3-18a.png",
+    "media/src/part3-18b.png"
+   ],
+   "tasks": [
+    "Describe the two pictures.",
+    "What are the difficulties of these 2 sports?",
+    "Why do some people prefer team sports to individual sports?"
+   ]
+  }
+ ]
 }
