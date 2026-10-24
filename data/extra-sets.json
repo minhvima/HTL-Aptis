@@ -1,0 +1,14 @@
+{
+ "_doc": "Các bộ đề thêm tay, không có trong file .docx. Ảnh nguồn đặt trong media/src/ và được import-speaking.py nén sang media/partN/ như các bộ khác. Đánh số tiếp sau các bộ lấy từ .docx.",
+ "part2": [
+  {
+   "src": "media/src/part2-18.webp",
+   "tasks": [
+    "Describe the picture.",
+    "Tell us the last time you went to the sea?",
+    "Why do some people dislike going to the sea?"
+   ]
+  }
+ ],
+ "part3": []
+}

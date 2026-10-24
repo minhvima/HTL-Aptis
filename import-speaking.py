@@ -132,6 +132,25 @@ def parse_picture_part(doc, part, head_re, first_task):
     return sets
 
 
+def add_extra_sets(sets, part):
+    """Thêm các bộ đề soạn tay trong data/extra-sets.json, đánh số tiếp sau."""
+    path = os.path.join(DATA, 'extra-sets.json')
+    if not os.path.exists(path):
+        return sets
+    with open(path, encoding='utf-8') as f:
+        extra = json.load(f)
+    for item in extra.get('part%d' % part, []):
+        no = len(sets) + 1
+        tasks = [{'k': 'describe' if i == 0 else 'q%d' % i, 'q': q}
+                 for i, q in enumerate(item.get('tasks', []))]
+        srcs = item.get('srcs') or ([item['src']] if item.get('src') else [])
+        sets.append({'no': no, 'id': 'p%d-%02d' % (part, no), 'label': str(no),
+                     'bank': '', 'extra': True, 'imgs': [{'src': s, 'crop': {}} for s in srcs],
+                     'tasks': tasks})
+        print('  them bo tay: p%d-%02d (%d nhiem vu)' % (part, no, len(tasks)))
+    return sets
+
+
 def shrink_images(doc, sets, part):
     outdir = os.path.join(MEDIA, 'part%d' % part)
     os.makedirs(outdir, exist_ok=True)
@@ -139,7 +158,10 @@ def shrink_images(doc, sets, part):
         for s in sets:
             names = []
             for j, ref in enumerate(s['imgs']):
-                raw = z.read('word/media/' + ref['src'])
+                if s.get('extra'):                     # ảnh soạn tay nằm ngoài file .docx
+                    raw = open(os.path.join(HERE, ref['src']), 'rb').read()
+                else:
+                    raw = z.read('word/media/' + ref['src'])
                 im = Image.open(io.BytesIO(raw)).convert('RGB')
                 c = ref.get('crop') or {}
                 if c:
@@ -193,7 +215,7 @@ if __name__ == '__main__':
     for part, doc, head, first in (
             (2, P2_DOC, HEAD_P2, 'Describe the picture.'),
             (3, P3_DOC, HEAD_P3, 'Tell me what you see in the two pictures.')):
-        sets = parse_picture_part(doc, part, head, first)
+        sets = add_extra_sets(parse_picture_part(doc, part, head, first), part)
         shrink_images(doc, sets, part)
         write_js(os.path.join(DATA, 'part%d.js' % part), 'APTIS_PART%d' % part, sets,
                  'Aptis Speaking Part %d' % part, stamp=PIC_STAMP)
